@@ -1,70 +1,33 @@
 import { state } from "./state.js";
-import { session } from "./session.js";
-import { saveMemory } from "./memory-db.js";
-import { setWorldMood } from "./world.js";
-import { onWalkStart, onStep, onWalkEnd } from "./puppy.js";
-import { speak } from "./voice.js";
+import { updateWorld } from "./map.js";
 
-function buildMemory(summary) {
-  const steps = summary.steps || 0;
-  const distance = summary.distance || 0;
-  const durationMs = summary.durationMs || 0;
-  const durationMin = Math.max(1, Math.round(durationMs / 60000));
-
-  let title = "A walk together";
-  if (distance >= 2) title = "The long walk";
-  else if (steps >= 30) title = "A steady walk";
-  else if (steps <= 5) title = "A short stroll";
-
-  let text = "We walked together today.";
-  if (distance >= 2) text = "We walked far together today.";
-  else if (steps >= 30) text = "We found a calm rhythm together.";
-  else if (steps <= 5) text = "It was a short, gentle walk.";
-
-  return {
-    id: undefined,
-    timestamp: Date.now(),
-    title,
-    text,
-    steps,
-    distance,
-    durationMs,
-    durationMin,
-    worldMood: state.worldMood,
-    puppyMood: state.puppy.mood,
-    bond: Number(state.puppy.bond.toFixed(2))
-  };
+function setPuppyMood(mood) {
+  state.puppy.mood = mood;
 }
 
-export async function handleEvent(type, payload = {}) {
-  if (type === "WALK_START") {
-    setWorldMood("BRIGHT");
-    onWalkStart();
-    speak("Oh... we’re going.");
-    return null;
+export async function handleEvent(event) {
+  if (event.type !== "ACTIVITY") return;
+
+  const walkKm = event.walkKm || 0;
+  const cycleKm = event.cycleKm || 0;
+
+  const totalKm = walkKm + cycleKm;
+
+  // 🌍 WORLD
+  updateWorld(totalKm);
+
+  // 🐶 PUPPY (simple rules only)
+  if (cycleKm > walkKm) {
+    setPuppyMood("EXCITED");
+  } else if (totalKm > 3) {
+    setPuppyMood("HAPPY");
+  } else {
+    setPuppyMood("CALM");
   }
 
-  if (type === "STEP") {
-    onStep(session.steps);
-
-    if (session.steps > 0 && session.steps % 10 === 0) {
-      speak("Keep going. I’m right here.");
-    }
-
-    return null;
-  }
-
-  if (type === "WALK_END") {
-    setWorldMood("CALM");
-    onWalkEnd();
-    speak("We’re back now.");
-
-    const memory = buildMemory(payload);
-    await saveMemory(memory);
-    state.lastMemoryAt = memory.timestamp;
-
-    return memory;
-  }
-
-  return null;
+  // 💾 MEMORY
+  state.memory.push({
+    time: Date.now(),
+    distance: totalKm
+  });
 }
