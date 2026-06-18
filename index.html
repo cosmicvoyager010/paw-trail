@@ -13,35 +13,69 @@
 </head>
 
 <body data-mood="CALM">
+
   <button class="debug-toggle" type="button" onclick="toggleDebug()">🧪</button>
 
+  <!-- HOME SCREEN -->
   <main id="home" class="screen active">
     <section class="card">
       <div id="homePuppy" class="puppy">🐶</div>
       <h1>PawTrail</h1>
       <p id="homeStatus">Your puppy is resting.</p>
       <p id="homeMeta">No walks yet.</p>
-      <button class="primary" type="button" onclick="startWalk()">Start Walk</button>
+
+      <button class="primary" type="button" onclick="startWalk()">
+        Start Walk
+      </button>
+
+      <!-- 🗺️ NEW: Map Button -->
+      <button class="secondary" type="button" onclick="showScreen('map')">
+        🗺️ Map
+      </button>
     </section>
   </main>
 
+  <!-- WALK SCREEN -->
   <main id="walk" class="screen">
     <section class="card">
       <div id="walkPuppy" class="puppy walking">🐶</div>
       <h2>Walking...</h2>
       <p id="walkStatus">Ready to go.</p>
       <p id="walkMeta">Steps: 0 • Distance: 0.00 km</p>
+
       <div class="actions">
-        <button class="secondary" type="button" onclick="addStep()">Step</button>
-        <button class="primary" type="button" onclick="endWalk()">End Walk</button>
+        <button class="secondary" type="button" onclick="addStep()">
+          Step
+        </button>
+        <button class="primary" type="button" onclick="endWalk()">
+          End Walk
+        </button>
       </div>
     </section>
   </main>
 
+  <!-- 🗺️ NEW: MAP SCREEN -->
+  <main id="map" class="screen">
+    <section class="card">
+      <h2>🗺️ Adventure Map</h2>
+
+      <ul id="mapList">
+        <li>Loading map...</li>
+      </ul>
+
+      <button class="secondary" type="button" onclick="showScreen('home')">
+        Back
+      </button>
+    </section>
+  </main>
+
+  <!-- DEBUG PANEL -->
   <aside id="debugPanel" class="debug hidden">
     <h3>🧪 Debug Panel</h3>
     <div id="debugContent">Loading...</div>
-    <button class="secondary full" type="button" onclick="toggleDebug()">Close</button>
+    <button class="secondary full" type="button" onclick="toggleDebug()">
+      Close
+    </button>
   </aside>
 
   <script type="module" src="./js/app.js"></script>
