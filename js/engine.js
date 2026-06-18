@@ -6,28 +6,45 @@ function setPuppyMood(mood) {
 }
 
 export async function handleEvent(event) {
-  if (event.type !== "ACTIVITY") return;
+  if (!event || event.type !== "ACTIVITY") {
+    return;
+  }
 
-  const walkKm = event.walkKm || 0;
-  const cycleKm = event.cycleKm || 0;
+  const walkKm = Number(event.walkKm || 0);
+  const cycleKm = Number(event.cycleKm || 0);
 
   const totalKm = walkKm + cycleKm;
 
-  // 🌍 WORLD
+  if (totalKm <= 0) {
+    return;
+  }
+
+  // 🌍 Update world progression
   updateWorld(totalKm);
 
-  // 🐶 PUPPY (simple rules only)
+  // 🐶 Puppy mood
   if (cycleKm > walkKm) {
     setPuppyMood("EXCITED");
-  } else if (totalKm > 3) {
+  } else if (totalKm >= 3) {
     setPuppyMood("HAPPY");
   } else {
     setPuppyMood("CALM");
   }
 
-  // 💾 MEMORY
+  // ❤️ Bond grows slowly
+  state.puppy.bond = Math.min(
+    100,
+    state.puppy.bond + totalKm * 0.5
+  );
+
+  // 💾 Memory
   state.memory.push({
-    time: Date.now(),
-    distance: totalKm
+    timestamp: Date.now(),
+    walkKm,
+    cycleKm,
+    totalKm,
+    puppyMood: state.puppy.mood
   });
+
+  return true;
 }
