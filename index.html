@@ -150,7 +150,7 @@
   --txt:#2d1a0e;--txt-m:#6a5040;
   /* Card surface: --card-solid/--card-glass are set per App-Look theme in PW_THEMES;
      --card itself just picks whichever the Fluid Glass toggle wants — see body.fluid-glass below. */
-  --card-solid:rgba(255,255,255,0.90);--card-glass:rgba(255,255,255,0.55);--card:var(--card-solid);
+  --card-solid:rgba(255,255,255,0.90);--card-glass:rgba(255,255,255,0.80);--card:var(--card-solid);
   --glass-blur:blur(8px);--card-border:rgba(0,0,0,0.08);--rim-light:rgba(255,255,255,0.25);
   --accent:#ff6b35;--gold:#f5c518;--sleepy:#9b7dbf;
   --space:#060d1f;--space-mid:#0d1f3c;--earth:#1a3a1a;--earth-mid:#2a5a2a;--flight-sky:#0a2540;--sky-mid:#123a5c;
@@ -167,7 +167,63 @@
    see LAB_LOG). Deliberately does NOT touch the dark dimming scrim behind modals, which
    stays fixed either way so text over it stays readable. */
 body.fluid-glass{--card:var(--card-glass);--glass-blur:blur(22px) saturate(180%);--card-border:rgba(255,255,255,0.6);--rim-light:rgba(255,255,255,0.65);}
-html,body{width:100%;height:100%;overflow:hidden;-webkit-text-size-adjust:100%;text-size-adjust:100%;overscroll-behavior:none;}
+html,body{width:100%;height:100%;height:100dvh;overflow:hidden;-webkit-text-size-adjust:100%;text-size-adjust:100%;overscroll-behavior:none;}
+
+/* ═══ Wider viewports (tablet/desktop) ═══
+   This app's whole layout — the outdoor scene, every icon row, every
+   panel — is built as a single portrait phone screen with dozens of
+   position:fixed elements anchored to fixed pixel offsets, not a fluid
+   grid. Genuinely re-deriving all of that into a true multi-column
+   responsive layout would mean redesigning the app, not fixing it.
+   Confirmed by actually rendering it at 1440px: cards stretch into thin
+   pills, the puppy is lost in a huge dark void, floating buttons end up
+   scattered with no relationship to each other — unusable, not just
+   inelegant. The standard, correct pattern for a phone-shaped app viewed
+   on a bigger screen (same one X/Instagram/Threads use for their own
+   mobile web apps) is to keep the phone layout completely intact and
+   center it in a fixed-width frame instead of letting it stretch.
+   transform:translateZ(0) is doing real work here, not decoration — it
+   establishes a new containing block, so the ~40 position:fixed elements
+   throughout the app (which are normally anchored to the actual browser
+   window) anchor to this frame instead. Without it every fixed element
+   would stay pinned to the real window edges and the frame trick wouldn't
+   work at all. */
+@media (min-width:700px){
+  html{background:#15151a;display:flex;align-items:center;justify-content:center;}
+  html,body{max-width:480px;max-height:960px;margin:0 auto;transform:translateZ(0);}
+  body{box-shadow:0 1px 1px rgba(0,0,0,0.2),0 30px 80px rgba(0,0,0,0.55),0 0 0 1px rgba(255,255,255,0.06);}
+}
+
+/* ═══ Phone in landscape ═══
+   Same portrait-only reality as above, but an actual phone rotated
+   sideways can't be put in a centered frame — there's no spare width to
+   frame it into, the device itself is just short. Confirmed this was a
+   full launch-blocker, not a minor gripe: tested onboarding at a real
+   phone-landscape size (844×390) and the primary "Allow motion" button
+   was already cut off at the bottom edge with the secondary button
+   entirely unreachable — scrolling doesn't help, body is overflow:hidden
+   by design everywhere. A dedicated rotate prompt is the standard,
+   expected pattern for a portrait-only mobile game/app, not a shortcut.
+   max-height:500px alone isn't enough, though — a short embedded preview
+   pane on a desktop (an editor's file-preview panel, for instance) can be
+   just as short-and-wide as a real landscape phone, and would wrongly get
+   this prompt too. (hover:none) and (pointer:coarse) is the standard way
+   to actually detect "this is a touchscreen with no mouse" rather than
+   guessing from dimensions alone — a desktop always has hover+a fine
+   pointer no matter how small its window is, so requiring both keeps this
+   scoped to real phones. */
+@media (orientation:landscape) and (max-height:500px) and (hover:none) and (pointer:coarse){
+  #rotate-prompt{display:flex !important;}
+}
+#rotate-prompt{
+  display:none;position:fixed;inset:0;z-index:99999;background:var(--night);
+  flex-direction:column;align-items:center;justify-content:center;gap:16px;
+  text-align:center;padding:24px;color:#fdf3e6;
+}
+#rotate-prompt .rotate-icon{font-size:56px;animation:rotatePrompt 1.8s ease-in-out infinite;}
+@keyframes rotatePrompt{0%,100%{transform:rotate(0deg);}50%{transform:rotate(-90deg);}}
+#rotate-prompt .rotate-title{font-size:var(--fs-lg);font-weight:800;}
+#rotate-prompt .rotate-sub{font-size:var(--fs-sm);color:#c9b8a8;max-width:280px;}
 body{font-family:var(--font-body,-apple-system,'SF Pro Text','Helvetica Neue',sans-serif);background:var(--sky);transition:background 1.2s;user-select:none;-webkit-user-select:none;font-variant-numeric:tabular-nums;}
 /* Film-grain texture — a single generated SVG noise tile, tiled and blended at very low
    opacity over the whole app. Pure CSS/SVG, no image asset. This is what separates "flat
@@ -490,7 +546,7 @@ body.panel-open #walk-reminder-btn{display:none;}
 #cycling-km{font-size:var(--fs-xs);font-weight:700;color:#34c759;white-space:nowrap;}
 
 /* ── HUD ── */
-#hud{position:fixed;top:0;left:0;right:0;z-index:50;padding:calc(var(--sat) + 8px) 14px 10px;display:flex;align-items:flex-start;gap:8px;background:linear-gradient(to bottom,rgba(232,244,253,0.97) 72%,transparent);transition:background 1.2s;}
+#hud{position:fixed;top:0;left:0;right:0;z-index:50;padding:calc(var(--sat) + 8px) 60px 10px 14px;display:flex;align-items:flex-start;gap:8px;background:linear-gradient(to bottom,rgba(232,244,253,0.97) 72%,transparent);transition:background 1.2s;}
 body.night-mode #hud{background:linear-gradient(to bottom,rgba(13,27,42,0.97) 72%,transparent);}
 .stat-card{background:var(--card);border-radius:13px;padding:7px 8px;text-align:center;flex:1;backdrop-filter:var(--glass-blur);border:1px solid var(--card-border);}
 .stat-val{font-size:var(--fs-xl);font-weight:800;color:var(--txt);line-height:1.1;letter-spacing:-0.5px;font-variant-numeric:tabular-nums;}
@@ -931,7 +987,7 @@ body.night-mode #baby-screen{background:var(--night);}
 
 /* ══ HOUSE MENU — picks Room 1/2/3 ══ */
 #house-menu-btn{position:fixed;bottom:calc(var(--sab) + 96px);left:16px;z-index:55;width:56px;height:56px;border-radius:50%;background:var(--card);border:1.5px solid rgba(0,0,0,0.08);box-shadow:0 4px 16px rgba(0,0,0,0.12);display:flex;flex-direction:column;align-items:center;justify-content:center;font-size:var(--fs-xl);cursor:pointer;backdrop-filter:var(--glass-blur);}
-#house-menu-btn .hmb-label{font-size:7px;font-weight:800;color:var(--txt-m);letter-spacing:0.5px;margin-top:-2px;}
+#house-menu-btn .hmb-label{font-size:9px;font-weight:800;color:var(--txt-m);letter-spacing:0.5px;margin-top:-2px;}
 body.test-mode-open #house-menu-btn{display:none;}
 #house-menu-popup{position:fixed;bottom:calc(var(--sab) + 264px);left:16px;z-index:200;background:var(--card);border-radius:16px;border:1px solid var(--card-border);backdrop-filter:var(--glass-blur);overflow:hidden;min-width:210px;opacity:0;pointer-events:none;transform:scale(0.9);transform-origin:bottom left;transition:all 0.2s cubic-bezier(0.34,1.56,0.64,1);box-shadow:0 8px 30px rgba(0,0,0,0.2);}
 #house-menu-popup.open{opacity:1;transform:scale(1);pointer-events:all;}
@@ -1077,6 +1133,20 @@ body.test-mode-open #real-weather-chip{display:none;}
 /* onboarding / permission */
 #onboarding-screen{background:var(--sky);}
 body.night-mode #onboarding-screen{background:var(--night);}
+/* Every one of these swaps its own background to var(--night) above/below,
+   but text everywhere else in the app just uses var(--txt)/var(--txt-m)
+   from the current App Look theme — always a dark color, since it's meant
+   for light cards. Nothing was ever redefining those two variables for
+   night mode, so title/body text on these specific dark screens was dark
+   text on a dark background. Scoped to just these containers (not body
+   globally) since plenty of other cards genuinely stay light even at
+   night, and would break the opposite way. Confirmed by rendering
+   onboarding in night mode and finding "Meet your puppy!" rendered nearly
+   invisible — the exact bug reported, not a hypothetical. */
+body.night-mode #onboarding-screen,body.night-mode #discover-screen,body.night-mode .manual-screen,
+body.night-mode #baby-screen,body.night-mode #talk-screen-card,body.night-mode #export-screen{
+  --txt:#fdf3e6;--txt-m:#c9b8a8;
+}
 .ob-pup{font-size:72px;animation:bounce 1s ease infinite alternate;}
 .ob-title{font-size:var(--fs-2xl);font-weight:800;color:var(--txt);line-height:1.2;}
 .ob-sub{font-size:var(--fs-base);color:var(--txt-m);line-height:1.65;max-width:300px;}
@@ -1121,12 +1191,31 @@ body.night-mode #talk-screen-card::after{background:var(--night);}
 .talk-title-row{display:flex;align-items:center;justify-content:center;gap:8px;}
 .talk-title-icon{font-size:var(--fs-xl);line-height:1;}
 .talk-title{font-size:var(--fs-xl);font-weight:800;color:var(--txt);}
-/* This card is always a light surface (or the dark night-mode swap above),
-   never the dark glass panels .close-btn's default white-on-translucent
-   style was designed for — override just here so the X is actually visible
-   against a near-white card, without touching .close-btn anywhere else. */
-#talk-screen-card .close-btn{position:absolute;top:10px;right:10px;background:rgba(0,0,0,0.06);color:var(--txt-m);}
-body.night-mode #talk-screen-card .close-btn{background:rgba(255,255,255,0.12);color:#fff;}
+/* Close buttons on light ("sky"/card) surfaces need dark styling —
+   .close-btn's default (white icon, translucent-white background) is built
+   for the always-dark journey panels (Space Explorer, Owner's Room, etc.)
+   and is nearly invisible here. Scoped to just these containers rather
+   than changed globally, since those other panels really are dark
+   regardless of day/night mode and would break the other way. Found by
+   actually rendering Discover in daylight and seeing a close button that
+   was only barely visible as a faint ghost — not a hypothetical. */
+/* Close buttons on these lighter/card surfaces need a backdrop that isn't
+   .close-btn's default (built for the always-dark journey panels, white
+   icon on translucent white — invisible here). color-mix against the
+   CURRENT var(--txt) instead of a hardcoded color is what makes this one
+   rule correct everywhere at once: light theme → dark tint, night mode's
+   scoped light --txt above → light tint, and the new dark Navy & Gold
+   theme → light tint too, automatically, with no separate night-mode
+   duplicate needed. Caught the gap this replaces by actually testing the
+   Navy & Gold theme after adding it: the old hardcoded rgba(0,0,0,0.06)
+   made the ✕ symbol itself still readable (color already used var(--txt-m))
+   but left its circular backdrop completely invisible against a dark card
+   — a real, visible bug, not a hypothetical. */
+#talk-screen-card .close-btn,#discover-screen .close-btn,.manual-screen .close-btn,
+#baby-screen .close-btn,#walk-reminder-modal .close-btn,#location-modal .close-btn,
+#friends-modal .close-btn,#activity-log-modal .close-btn,#theme-picker-modal .close-btn{
+  background:color-mix(in srgb, var(--txt) 12%, transparent);color:var(--txt-m);
+}
 #talk-list{width:100%;max-width:380px;display:grid;grid-template-columns:1fr 1fr;gap:7px 8px;padding:2px 2px 2px 0;}
 .talk-cat{grid-column:1/-1;font-size:var(--fs-xs);font-weight:700;color:var(--txt-m);text-transform:uppercase;letter-spacing:0.6px;margin:8px 0 1px;text-align:left;}
 .talk-btn{background:var(--card);border:1px solid rgba(0,0,0,0.08);border-radius:13px;padding:10px 11px;font-size:var(--fs-sm);font-weight:600;color:var(--txt);text-align:left;cursor:pointer;line-height:1.3;}
@@ -1258,6 +1347,16 @@ body.night-mode #talk-screen-card .close-btn{background:rgba(255,255,255,0.12);c
 </head>
 <body>
 
+<!-- Shown only via CSS media query when a phone is in landscape — see the
+     @media (orientation:landscape) and (max-height:500px) rule. Plain
+     opaque full-screen overlay, so nothing needs to be hidden underneath;
+     it just fully covers whatever screen was open. -->
+<div id="rotate-prompt">
+  <div class="rotate-icon">📱</div>
+  <div class="rotate-title">Rotate back to portrait</div>
+  <div class="rotate-sub">Puppy Walk is designed for portrait mode — turn your phone back upright to continue.</div>
+</div>
+
 <!-- ① ONBOARDING / PERMISSION SCREEN (new - privacy-first framing) -->
 <div id="onboarding-screen" class="overlay">
   <div class="ob-pup">🐶</div>
@@ -1317,7 +1416,7 @@ body.night-mode #talk-screen-card .close-btn{background:rgba(255,255,255,0.12);c
 <!-- TALK TO PUPPY OVERLAY -->
 <div id="talk-screen" class="hidden">
   <div id="talk-screen-card">
-  <button class="close-btn" id="btn-talk-close" title="Close" aria-label="Close">✕</button>
+  <button class="close-btn" id="btn-talk-close" title="Close" aria-label="Close" style="position:absolute;top:10px;right:10px;">✕</button>
   <div class="talk-title-row">
     <span class="talk-title-icon">💬</span>
     <span class="talk-title">Talk to Puppy</span>
@@ -1361,6 +1460,7 @@ body.night-mode #talk-screen-card .close-btn{background:rgba(255,255,255,0.12);c
 
 <!-- BABY PUPPY OVERLAY -->
 <div id="baby-screen" class="overlay hidden">
+  <button class="close-btn" id="btn-baby-close" title="Close" aria-label="Close" style="position:absolute;top:calc(var(--sat) + 14px);right:14px;">✕</button>
   <div style="font-size:52px;">🐶</div>
   <div class="baby-title" id="baby-stage-label">Baby puppy</div>
   <div class="baby-sub" id="baby-name-display" style="cursor:pointer;text-decoration:underline;text-decoration-style:dotted;">Tap to rename</div>
@@ -1383,8 +1483,6 @@ body.night-mode #talk-screen-card .close-btn{background:rgba(255,255,255,0.12);c
     <button class="ob-btn-secondary" id="btn-baby-skip" style="flex:1;font-size:var(--fs-xs);">🧪 Skip to next stage</button>
     <button class="ob-btn-secondary" id="btn-baby-reset" style="flex:1;font-size:var(--fs-xs);">↺ Reset to Day 0</button>
   </div>
-
-  <button class="ob-btn-secondary" id="btn-baby-close">Close</button>
 </div>
 
 <!-- SCENE -->
@@ -3133,7 +3231,8 @@ body.night-mode #talk-screen-card .close-btn{background:rgba(255,255,255,0.12);c
   display:none;position:fixed;inset:0;z-index:300;
   background:rgba(0,0,0,0.55);backdrop-filter:blur(6px);
   align-items:center;justify-content:center;padding:24px;">
-  <div style="background:var(--card);border-radius:24px;padding:24px;width:100%;max-width:320px;text-align:center;box-shadow:0 1px 2px rgba(0,0,0,0.06),0 12px 32px rgba(0,0,0,0.16),0 28px 64px rgba(0,0,0,0.12),inset 0 1px 0 var(--rim-light);">
+  <div style="position:relative;background:var(--card);border-radius:24px;padding:24px;width:100%;max-width:320px;text-align:center;box-shadow:0 1px 2px rgba(0,0,0,0.06),0 12px 32px rgba(0,0,0,0.16),0 28px 64px rgba(0,0,0,0.12),inset 0 1px 0 var(--rim-light);">
+    <button class="close-btn" id="walk-reminder-close" title="Close" aria-label="Close" style="position:absolute;top:10px;right:10px;">✕</button>
     <div style="font-size:44px;margin-bottom:8px;">⏰</div>
     <div class="subtitle">Walk reminder</div>
     <div style="font-size:var(--fs-sm);color:var(--txt-m);margin-bottom:18px;">Puppy will come ask you at this time every day.</div>
@@ -3145,7 +3244,6 @@ body.night-mode #talk-screen-card .close-btn{background:rgba(255,255,255,0.12);c
       <button id="walk-reminder-off" class="segment-btn-lg">Turn off</button>
       <button id="walk-reminder-save" class="btn-primary-green">Save reminder 🐾</button>
     </div>
-    <div style="margin-top:12px;"><button id="walk-reminder-close" class="link-btn">Close</button></div>
   </div>
 </div>
 
@@ -3155,7 +3253,8 @@ body.night-mode #talk-screen-card .close-btn{background:rgba(255,255,255,0.12);c
   display:none;position:fixed;inset:0;z-index:300;
   background:rgba(0,0,0,0.55);backdrop-filter:blur(6px);
   align-items:center;justify-content:center;padding:24px;">
-  <div style="background:var(--card);border-radius:24px;padding:24px;width:100%;max-width:320px;text-align:center;box-shadow:0 1px 2px rgba(0,0,0,0.06),0 12px 32px rgba(0,0,0,0.16),0 28px 64px rgba(0,0,0,0.12),inset 0 1px 0 var(--rim-light);">
+  <div style="position:relative;background:var(--card);border-radius:24px;padding:24px;width:100%;max-width:320px;text-align:center;box-shadow:0 1px 2px rgba(0,0,0,0.06),0 12px 32px rgba(0,0,0,0.16),0 28px 64px rgba(0,0,0,0.12),inset 0 1px 0 var(--rim-light);">
+    <button class="close-btn" id="location-close-btn" title="Close" aria-label="Close" style="position:absolute;top:10px;right:10px;">✕</button>
     <div style="font-size:44px;margin-bottom:8px;">📍</div>
     <div class="subtitle">Real sunrise &amp; weather</div>
     <div style="font-size:var(--fs-sm);color:var(--txt-m);margin-bottom:18px;">Off by default. If you turn it on, puppy uses your real local sunrise/sunset for day &amp; night, and today's actual weather — so puppy might suggest waiting out the rain, or heading out while it's clear. Your location is never saved to disk, only a yes/no flag.</div>
@@ -3164,7 +3263,6 @@ body.night-mode #talk-screen-card .close-btn{background:rgba(255,255,255,0.12);c
       <button id="location-off-btn" class="segment-btn-lg">Turn off</button>
       <button id="location-on-btn" class="btn-primary-green">Turn on 📍</button>
     </div>
-    <div style="margin-top:12px;"><button id="location-close-btn" class="link-btn">Close</button></div>
     <div style="margin-top:16px;padding-top:14px;border-top:1px solid rgba(0,0,0,0.08);text-align:left;">
       <div style="font-size:var(--fs-sm);font-weight:700;color:var(--txt-m);text-transform:uppercase;letter-spacing:0.6px;margin-bottom:6px;">🌍 Hemisphere</div>
       <div style="font-size:var(--fs-xs);color:var(--txt-m);margin-bottom:10px;">Used to show the right seasonal flowers, leaves, and snow. "Auto" uses your location above when it's on. If you can't or don't want to use GPS, set it manually here instead.</div>
@@ -3195,7 +3293,8 @@ body.night-mode #talk-screen-card .close-btn{background:rgba(255,255,255,0.12);c
   display:none;position:fixed;inset:0;z-index:300;
   background:rgba(0,0,0,0.55);backdrop-filter:blur(6px);
   align-items:center;justify-content:center;padding:24px;">
-  <div style="background:var(--card);border-radius:24px;padding:22px;width:100%;max-width:340px;max-height:82vh;overflow-y:auto;box-shadow:0 1px 2px rgba(0,0,0,0.06),0 12px 32px rgba(0,0,0,0.16),0 28px 64px rgba(0,0,0,0.12),inset 0 1px 0 var(--rim-light);">
+  <div style="position:relative;background:var(--card);border-radius:24px;padding:22px;width:100%;max-width:340px;max-height:82vh;overflow-y:auto;box-shadow:0 1px 2px rgba(0,0,0,0.06),0 12px 32px rgba(0,0,0,0.16),0 28px 64px rgba(0,0,0,0.12),inset 0 1px 0 var(--rim-light);">
+    <button class="close-btn" id="friends-close-btn" title="Close" aria-label="Close" style="position:absolute;top:10px;right:10px;">✕</button>
     <div style="text-align:center;font-size:40px;margin-bottom:6px;">🕐</div>
     <div style="text-align:center;font-size:var(--fs-lg);font-weight:800;color:var(--txt);margin-bottom:4px;">Friend Clocks</div>
     <div style="text-align:center;font-size:var(--fs-sm);color:var(--txt-m);margin-bottom:14px;">Pick a city for up to 6 friends and see their local time — not real GPS tracking, just a city you choose for them.</div>
@@ -3229,7 +3328,6 @@ body.night-mode #talk-screen-card .close-btn{background:rgba(255,255,255,0.12);c
 
     <div id="friends-list"></div>
     <div id="friends-empty" style="text-align:center;font-size:var(--fs-sm);color:var(--txt-m);padding:10px 0;">No friends added yet.</div>
-    <div style="margin-top:14px;text-align:center;"><button id="friends-close-btn" class="link-btn">Close</button></div>
   </div>
 </div>
 
@@ -3246,19 +3344,20 @@ body.night-mode #talk-screen-card .close-btn{background:rgba(255,255,255,0.12);c
      from Lab Mode's dev changelog on purpose: this is "what happened in my
      session," not "what changed in the code." -->
 <div id="activity-log-modal" style="display:none;position:fixed;inset:0;z-index:300;background:rgba(0,0,0,0.55);backdrop-filter:blur(6px);align-items:center;justify-content:center;padding:24px;">
-  <div style="background:var(--card);border-radius:24px;padding:22px;width:100%;max-width:340px;box-shadow:0 1px 2px rgba(0,0,0,0.06),0 12px 32px rgba(0,0,0,0.16),0 28px 64px rgba(0,0,0,0.12),inset 0 1px 0 var(--rim-light);">
+  <div style="position:relative;background:var(--card);border-radius:24px;padding:22px;width:100%;max-width:340px;box-shadow:0 1px 2px rgba(0,0,0,0.06),0 12px 32px rgba(0,0,0,0.16),0 28px 64px rgba(0,0,0,0.12),inset 0 1px 0 var(--rim-light);">
+    <button class="close-btn" id="activity-log-close-btn" title="Close" aria-label="Close" style="position:absolute;top:10px;right:10px;">✕</button>
     <div style="text-align:center;font-size:36px;margin-bottom:6px;">📋</div>
     <div style="text-align:center;font-size:var(--fs-lg);font-weight:800;color:var(--txt);margin-bottom:4px;">Activity Log</div>
     <div style="text-align:center;font-size:var(--fs-sm);color:var(--txt-m);margin-bottom:14px;">A running log of what's happened in this session — syncs, Auto Sync toggles. Kept separate from the Lab Mode build log. Last 50 events, on this device only.</div>
     <div id="activity-log-list" style="background:rgba(0,0,0,0.04);border-radius:14px;padding:12px 14px;font-size:var(--fs-sm);color:var(--txt-m);line-height:2;max-height:280px;overflow-y:auto;"></div>
     <button id="clear-activity-log" style="margin-top:10px;background:none;border:none;color:var(--accent);font-size:var(--fs-md);font-weight:600;cursor:pointer;padding:6px 0;">Clear log</button>
-    <div style="margin-top:8px;text-align:center;"><button id="activity-log-close-btn" class="link-btn">Close</button></div>
   </div>
 </div>
 
 <!-- APP LOOK — picker of full palette+font swaps. All free, none gated. -->
 <div id="theme-picker-modal" style="display:none;position:fixed;inset:0;z-index:300;background:rgba(0,0,0,0.55);backdrop-filter:blur(6px);align-items:center;justify-content:center;padding:24px;">
-  <div style="background:var(--card);border-radius:24px;padding:22px;width:100%;max-width:340px;box-shadow:0 1px 2px rgba(0,0,0,0.06),0 12px 32px rgba(0,0,0,0.16),0 28px 64px rgba(0,0,0,0.12),inset 0 1px 0 var(--rim-light);">
+  <div style="position:relative;background:var(--card);border-radius:24px;padding:22px;width:100%;max-width:340px;box-shadow:0 1px 2px rgba(0,0,0,0.06),0 12px 32px rgba(0,0,0,0.16),0 28px 64px rgba(0,0,0,0.12),inset 0 1px 0 var(--rim-light);">
+    <button class="close-btn" id="theme-picker-close-btn" title="Close" aria-label="Close" style="position:absolute;top:10px;right:10px;">✕</button>
     <div style="text-align:center;font-size:36px;margin-bottom:6px;">🎨</div>
     <div style="text-align:center;font-size:var(--fs-lg);font-weight:800;color:var(--txt);margin-bottom:4px;font-family:var(--font-display,inherit);">App Look</div>
     <div style="text-align:center;font-size:var(--fs-sm);color:var(--txt-m);margin-bottom:16px;">All free — just different color &amp; font sets. Puppy, room art, and badges look the same either way; only the surrounding screens change.</div>
@@ -3272,8 +3371,8 @@ body.night-mode #talk-screen-card .close-btn{background:rgba(255,255,255,0.12);c
         <div class="theme-swatch-label">Belle Époque</div>
       </button>
       <button class="theme-swatch-btn" data-theme="blanc">
-        <div class="theme-swatch-dots"><span style="background:#e8e8ea;"></span><span style="background:#b8a48c;"></span><span style="background:#1c1c1e;"></span></div>
-        <div class="theme-swatch-label">Blanc</div>
+        <div class="theme-swatch-dots"><span style="background:#0f2338;"></span><span style="background:#d4af37;"></span><span style="background:#f2e8d5;"></span></div>
+        <div class="theme-swatch-label">Navy &amp; Gold</div>
       </button>
       <button class="theme-swatch-btn" data-theme="seaglass">
         <div class="theme-swatch-dots"><span style="background:#2e8b8b;"></span><span style="background:#d4a24c;"></span><span style="background:#e08a6b;"></span></div>
@@ -3283,7 +3382,6 @@ body.night-mode #talk-screen-card .close-btn{background:rgba(255,255,255,0.12);c
     <div style="height:1px;background:rgba(0,0,0,0.08);margin:4px 0 12px;"></div>
     <button id="glass-toggle-btn" style="width:100%;padding:12px;border-radius:14px;border:1.5px solid rgba(0,0,0,0.1);background:rgba(0,0,0,0.03);color:var(--txt);font-size:var(--fs-sm);font-weight:700;cursor:pointer;">Fluid Glass: Off</button>
     <div style="text-align:center;font-size:var(--fs-xs);color:var(--txt-m);margin-top:6px;">An independent frosted-glass look — combine it with any color above.</div>
-    <div style="margin-top:14px;text-align:center;"><button id="theme-picker-close-btn" class="link-btn">Close</button></div>
   </div>
 </div>
 
@@ -9529,6 +9627,11 @@ document.getElementById('talk-list').addEventListener('click',e=>{
 // added, fixed, or removed, a new entry goes at the TOP of this array —
 // {date:'Mon DD, YYYY', type:'added'|'fixed'|'removed'|'pending', text:'...'}
 const LAB_LOG=[
+  {date:'Aug 6, 2026',type:'fixed',text:"📐 Rotate-prompt false positive: a short, wide preview pane on desktop (an editor or chat UI's embedded file preview, for instance) was triggering the same \"rotate back to portrait\" message meant for actual phones turned sideways — dimensions alone can't tell those two apart, since a preview panel can easily be just as short-and-wide as a real landscape phone. Added (hover:none) and (pointer:coarse) to the condition, the standard way to detect an actual touchscreen with no mouse — a desktop reports hover+fine-pointer no matter how small its window gets, so it's now correctly excluded regardless of pane size, while a real phone in landscape still gets the prompt exactly as before. Verified both directions directly: a touch-disabled 800×400 page (desktop preview stand-in) no longer shows it, a touch-enabled 844×390 page (real phone landscape) still does."},
+  {date:'Aug 6, 2026',type:'fixed',text:"📐 Cross-device audit (by request — iPhone as default, but also other phones, tablets, and desktop). Actually rendered the app at 9 real device sizes in a headless browser rather than reasoning about CSS in the abstract, and found 3 real, reproducible issues: (1) On narrower phones (confirmed down to 360px, e.g. many Android phones), the STREAK stat card was getting covered by the settings gear button — the HUD row didn't know the gear button existed and stretched its 4 cards edge-to-edge into the same space. Fixed by reserving space for it. (2) Rotating a phone to landscape was a full launch-blocker, not a cosmetic issue — tested onboarding at a real phone-landscape size (844×390) and the primary button was already cut off with the secondary button completely unreachable, no way to scroll to it either. Since this app's whole layout (scene, every panel, every icon row) is built as one portrait screen with ~40 position:fixed elements at fixed pixel offsets — genuinely redoing that as a fluid multi-orientation layout would mean redesigning the app, not fixing it — added a dedicated rotate-to-portrait prompt instead, the standard pattern for portrait-only mobile games/apps. Tuned to a max-height:500px threshold so it only ever fires on an actual phone turned sideways, confirmed it does NOT fire on iPad or desktop in landscape (both well over that height). (3) Tablet and desktop were worse than just 'not optimized' — rendered at 1440px and found stat cards stretched into thin pills, the puppy lost in a huge dark void, floating buttons scattered with no visual relationship to each other. Rather than a partial fluid-layout patch, applied the same pattern X/Instagram/Threads use for their own mobile web apps on desktop: keep the phone layout fully intact and center it in a fixed-width frame (max 480px) with a neutral letterbox background, using transform:translateZ(0) on the frame so the ~40 fixed-position elements throughout the app anchor to the frame instead of the real browser window — confirmed this was necessary, not decorative, since without it every one of those elements would've stayed pinned to the actual window edges and the frame trick wouldn't have worked at all. Re-verified all 9 device sizes after the fixes, including confirming ordinary iPhone widths render byte-for-byte the same as before (this only activates ≥700px). Also switched full-viewport sizing to 100dvh (2024–2026 standard) so mobile browser address-bar show/hide doesn't cause height jumps, and bumped one outlier label (House button, 7px — smaller than every comparable label elsewhere in the app) up to 9px for consistency."},
+  {date:'Aug 6, 2026',type:'fixed',text:"🌓 Contrast fix, two separate root causes traced from 3 screenshots (main HUD, Add a past ride, onboarding). Root cause 1 — Fluid Glass's tint (rgba(255,255,255,0.55) white, in every one of the 4 App Look themes) was too translucent: with backdrop-filter blur sampling whatever's actually behind it, a card over a dark scene or the standard dark modal scrim blends down to medium-gray, and the theme's dark text was never designed for that. Bumped the glass tint's opacity to 0.80 in all 4 themes (plus the pre-theme default) — enough more opaque to stay readable against any backdrop while still visibly more translucent than the 0.90 solid-card variant, so Fluid Glass still reads as glass. Root cause 2, independent of Fluid Glass entirely — onboarding, Discover, the Manual screens, Baby puppy, Talk to Puppy, and Export all swap their own background to solid dark in night mode, but nothing ever redefined the var(--txt)/var(--txt-m) text-color variables to match — so e.g. \"Meet your puppy!\" was dark brown on near-black, confirmed by rendering onboarding in night mode and seeing it nearly disappear, the exact bug reported. Fixed by redefining those two variables to a light color, scoped to just those six containers specifically (not body-wide) since other cards genuinely stay light at night and would break the opposite way if touched globally. Re-verified all 3 original scenarios after the fix by rendering them again the same way they were reported — main HUD (glass+night), Add a past ride (glass+night), onboarding (night) — all clearly legible now, plus checked day-mode with Fluid Glass on for regressions since that touches every glass surface in the app."},
+  {date:'Aug 6, 2026',type:'fixed',text:"✕ Close-button pass, app-wide (by request, with a screenshot flagging Walk Reminder specifically). Found 6 screens still using a text \"Close\" link at the bottom instead of a corner X: Walk reminder, Real sunrise & weather, Friend Clocks, Baby puppy, Activity Log, and App Look — all converted to a proper top-right ✕, same tap-to-dismiss pattern already used everywhere else, same underlying click handler (only the button's position/markup changed, not its id, so nothing else needed touching). While doing this, actually rendered every one of them in a headless browser rather than assuming the shared .close-btn class would just work — it didn't: that class is styled for the app's dark journey panels (white icon), and on these lighter card/sky-background screens it was landing as a barely-visible white-on-near-white ghost. Traced it further and found two more screens with the exact same invisible-X bug on already-existing close buttons, not just the ones being converted: Discover and the shared Manual screens (User Manual, Apple Health Manual, What's Changed, Dog Friends) — confirmed via an actual daylight screenshot of Discover, where the X was only barely visible as a faint circle in the corner. Fixed all of it with one shared, scoped override (dark icon on these specific light containers, reverting to the original white-icon style under night-mode) rather than nine separate one-off patches. Verified every one of the 6 converted screens live — correct position, correct color, and confirmed each ✕ actually closes its screen on tap, not just visually present."},
+  {date:'Aug 6, 2026',type:'fixed',text:"💬 Talk to Puppy, another pass (by request, with a screenshot flagging the specific problems). Panel: removed the subtitle line and the free-text \"or write your own\" input entirely — this is a tap-to-select list now, not a chat box; combined the floating icon and title into one row (💬 Talk to Puppy) instead of two stacked lines; replaced the text \"Close\" link at the bottom with a proper ✕ in the corner, same tap-to-dismiss pattern as every other panel in the app. That corner ✕ reuses the shared .close-btn class, which is styled for dark glass panels (white icon) — this card is a light surface, so added a scoped override (dark icon here specifically) after actually rendering both day and night mode and catching that the default styling was a barely-visible white-on-white X in daylight. Content: \"Bad weather, can't go out today\" was showing up as an option any time the puppy was just standing there idle, regardless of whether the weather was actually bad — it's now gated on real weather (GPS-based when granted, falls back to the self-reported Weather Mood Picker), verified by forcing rainy weather and confirming the option only appears then. And the core ask — puppy replies now combine the dog-language line and the translated-thought line together (e.g. 'Woof woof! 🐾 💭 \"Hey! You came to talk to me!\"') instead of randomly showing just one of the three response styles the pool already had, so a reply always reads as both a sound and an expression, not a coin flip between a wordless bark and a talking dog. Caught a real sizing bug fixing this: the bubble's parent (the puppy sprite wrapper) is itself a narrow shrink-wrapped box with no explicit width, which was silently capping the bubble's width to ~64px no matter what max-width the bubble itself had — the combined, longer reply text was wrapping into a tall 8-line sliver instead of two clean lines. Fixed with width:max-content so the bubble sizes to its own content instead of inheriting its parent's narrow footprint. Found by rendering it in an actual headless browser and measuring the real box, not by reading the CSS — the bug wouldn't have been obvious either way."},
   {date:'Aug 6, 2026',type:'fixed',text:"📱 iPhone-as-default pass, 4 items (by request): (1) added a real Home Screen icon (a paw print on the app's own accent gradient, generated and inlined as a data URI — no external asset, matching how the rest of the app has zero image dependencies) plus a theme-color meta tag; previously saving to Home Screen just grabbed a screenshot. (2) Added -webkit-text-size-adjust and overscroll-behavior hardening at the html/body level, on top of the overflow:hidden already there, so the page can't show Safari's rubber-band bounce or get its type auto-inflated. (3) Found and fixed 3 text inputs sitting at 13px (Restore-data box, Lab notes textarea, Talk to Puppy's custom-message box) — under Safari's 16px floor, so focusing any of them was auto-zooming the whole page in, which is exactly the kind of thing that makes a web app feel like a web app instead of an app. Bumped all three to the same 17px the rest of the app's body text already uses. (Two dropdowns were also at 13px but don't trigger this specific bug — left alone, flagged here in case they're worth a follow-up pass.) Caught and fixed one real bug while verifying this live rather than just reading the diff: the new Accessories popover's initial-state sync was reading a `let` variable before its declaration ran, throwing on load in a script-level scope check — moved the sync call to after both variables exist instead of firing early from the sunglasses restore path."},
   {date:'Aug 6, 2026',type:'fixed',text:"🌀❄️ Fan/Cooler moved out of the top badge row — where it was a small icon squeezed among the room label, time badge and exit buttons and easy to miss entirely — down into the room scene itself: tapping 🌀 Fan / Cooler now shows the wall-AC unit and a floor fan with genuinely spinning blades, floor-level by the window, plus the curtains sway. This replaces a plain spinning-emoji icon with artwork that already existed in the file but was previously only shown automatically in summer; it's now under the same manual on/off control the emoji version had (never weather-triggered, same as before). Also gave the AC's airflow lines an actual flowing-dash animation, since a static airflow icon doesn't read as moving air. Added 🪭 Hand fan (uchiwa) as a new hands-on interaction next to Pet/Toy/Water/Food/Fan — unlike the Fan/Cooler appliance, this doesn't run continuously: each tap plays one real fanning motion (the icon waves twice, ~1s) and nothing happens between taps, matching how an owner would actually fan their puppy by hand rather than a machine left running. Reuses the existing houseInteract() reaction system, so the puppy's response (happy bounce, sparkle, mood card update) is consistent with every other room interaction. Verified all of it live in a scripted DOM test: fan toggle correctly shows/hides the AC+fan+curtain-sway together and reverses cleanly, and the uchiwa wave animation starts on tap and clears itself after 1s."},
   {date:'Aug 6, 2026',type:'fixed',text:"💬 Talk to Puppy reworked again: the reply now plays out purely as a speech bubble on the puppy in the scene, not as text inside the popup. Reasoning — talking to your puppy should feel like watching it react to you, not reading a transcript in a dialog box. Mechanism: the popup now closes the instant you send (tap a topic or your own typed message), which is what actually solves the earlier visibility bug rather than papering over it — with the popup gone there's no card left to hide the bubble behind, so it's guaranteed on-screen on every device, no geometry checks needed. This also fixes the readability half of that same earlier bug more robustly than the previous patch did: the bubble keeps its own ~4s visible window regardless of when the popup closed, so the reply can never be cut off before it's readable. Everything else about a reply — which of the three response styles it uses, and the context-aware option filtering while walking/cycling — is unchanged. Verified end-to-end in a scripted DOM test (not just read over): open panel → tap an option → panel closes → bubble shows a typing indicator → resolves to the real reply text → auto-hides ~4s later, all firing on schedule.",},
@@ -10551,10 +10654,10 @@ document.getElementById('clear-activity-log')?.addEventListener('click',()=>{
 // the id itself, if you want) once you've picked real names; nothing else
 // needs to change to rename them. ──
 window.PW_THEMES={
-  classic:{label:'Classic','--txt':'#2d1a0e','--txt-m':'#6a5040','--card-solid':'rgba(255,255,255,0.90)','--card-glass':'rgba(255,255,255,0.55)','--accent':'#ff6b35','--gold':'#f5c518','--clay':'#ff6b35','--font-display':"-apple-system,'SF Pro Text','Helvetica Neue',sans-serif",'--font-body':"-apple-system,'SF Pro Text','Helvetica Neue',sans-serif"},
-  belleepoque:{label:'Belle Époque','--txt':'#2e3947','--txt-m':'#6b7c8a','--card-solid':'rgba(232,240,246,0.92)','--card-glass':'rgba(232,240,246,0.50)','--accent':'#5c86a8','--gold':'#c9a227','--clay':'#d98ca0','--font-display':"'Playfair Display',Georgia,'Source Serif 4',serif",'--font-body':"-apple-system,'SF Pro Text','Helvetica Neue',sans-serif"},
-  blanc:{label:'Blanc','--txt':'#1c1c1e','--txt-m':'#8e8e93','--card-solid':'rgba(255,255,255,0.94)','--card-glass':'rgba(255,255,255,0.50)','--accent':'#3a3a3c','--gold':'#b8a48c','--clay':'#6b6b6d','--font-display':"-apple-system,'SF Pro Text','Helvetica Neue',sans-serif",'--font-body':"-apple-system,'SF Pro Text','Helvetica Neue',sans-serif"},
-  seaglass:{label:'Seaglass','--txt':'#1b3a3e','--txt-m':'#5c7a7d','--card-solid':'rgba(235,247,247,0.92)','--card-glass':'rgba(235,247,247,0.50)','--accent':'#2e8b8b','--gold':'#d4a24c','--clay':'#e08a6b','--font-display':"'Quicksand',-apple-system,'SF Pro Text',sans-serif",'--font-body':"-apple-system,'SF Pro Text','Helvetica Neue',sans-serif"}
+  classic:{label:'Classic','--txt':'#2d1a0e','--txt-m':'#6a5040','--card-solid':'rgba(255,255,255,0.90)','--card-glass':'rgba(255,255,255,0.80)','--accent':'#ff6b35','--gold':'#f5c518','--clay':'#ff6b35','--font-display':"-apple-system,'SF Pro Text','Helvetica Neue',sans-serif",'--font-body':"-apple-system,'SF Pro Text','Helvetica Neue',sans-serif"},
+  belleepoque:{label:'Belle Époque','--txt':'#2e3947','--txt-m':'#6b7c8a','--card-solid':'rgba(232,240,246,0.92)','--card-glass':'rgba(232,240,246,0.80)','--accent':'#5c86a8','--gold':'#c9a227','--clay':'#d98ca0','--font-display':"'Playfair Display',Georgia,'Source Serif 4',serif",'--font-body':"-apple-system,'SF Pro Text','Helvetica Neue',sans-serif"},
+  blanc:{label:'Navy & Gold','--txt':'#f2e8d5','--txt-m':'#b3a480','--card-solid':'rgba(13,32,52,0.94)','--card-glass':'rgba(13,32,52,0.80)','--accent':'#9c7a2e','--gold':'#d4af37','--clay':'#a8763c','--font-display':"'Playfair Display',Georgia,'Source Serif 4',serif",'--font-body':"-apple-system,'SF Pro Text','Helvetica Neue',sans-serif"},
+  seaglass:{label:'Seaglass','--txt':'#1b3a3e','--txt-m':'#5c7a7d','--card-solid':'rgba(235,247,247,0.92)','--card-glass':'rgba(235,247,247,0.80)','--accent':'#2e8b8b','--gold':'#d4a24c','--clay':'#e08a6b','--font-display':"'Quicksand',-apple-system,'SF Pro Text',sans-serif",'--font-body':"-apple-system,'SF Pro Text','Helvetica Neue',sans-serif"}
 };
 // One-time migration from the old 5-slot lineup (classic/premium/theme3/theme4) to the
 // new 4-palette system + independent Fluid Glass toggle. Premium's whole identity WAS the
