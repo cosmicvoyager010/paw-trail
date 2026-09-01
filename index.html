@@ -194,6 +194,32 @@ html,body{width:100%;height:100%;height:100dvh;overflow:hidden;-webkit-text-size
   body{box-shadow:0 1px 1px rgba(0,0,0,0.2),0 30px 80px rgba(0,0,0,0.55),0 0 0 1px rgba(255,255,255,0.06);}
 }
 
+/* ═══ Manual device preview (dev/QA tool, Settings → Preview mode) ═══
+   Desktop browsers never set env(safe-area-inset-top) — it just falls back
+   to 44px — so shrinking a Windows browser window to "phone size" still
+   doesn't reproduce iPhone-specific dead zones like the Dynamic Island
+   (~59px), which is exactly how the earlier ✕-button bug slipped through
+   on desktop. These two classes are applied to <html> by JS and force the
+   real numbers instead of guessing from window width. --sat/--sab are
+   redefined here (not in :root) so they still lose to the real
+   env(safe-area-inset-*) on an actual phone if this ever ran there. */
+html.force-phone-preview{
+  --sat:59px;--sab:34px; /* iPhone 14 Dynamic Island + home-indicator */
+  background:#15151a;display:flex;align-items:center;justify-content:center;
+}
+html.force-phone-preview body{
+  max-width:390px;max-height:844px;margin:0 auto;
+  transform:translateZ(0);
+  box-shadow:0 1px 1px rgba(0,0,0,0.2),0 30px 80px rgba(0,0,0,0.55),0 0 0 1px rgba(255,255,255,0.06);
+}
+html.force-desktop-preview{
+  background:#15151a;display:flex;align-items:center;justify-content:center;
+}
+html.force-desktop-preview body{
+  max-width:480px;max-height:960px;margin:0 auto;transform:translateZ(0);
+  box-shadow:0 1px 1px rgba(0,0,0,0.2),0 30px 80px rgba(0,0,0,0.55),0 0 0 1px rgba(255,255,255,0.06);
+}
+
 /* ═══ Phone in landscape ═══
    Same portrait-only reality as above, but an actual phone rotated
    sideways can't be put in a centered frame — there's no spare width to
@@ -1008,6 +1034,9 @@ body.test-mode-open .apple-quick-btn{display:none;}
 #autosync-quick-btn .aq-dot{display:none;position:absolute;top:-2px;right:-2px;width:11px;height:11px;border-radius:50%;background:#34c759;border:2px solid var(--card);}
 #autosync-quick-btn.on .aq-dot{display:block;}
 #health-quick-btn{bottom:calc(var(--sab) + 316px);}
+#preview-quick-btn{bottom:calc(var(--sab) + 472px);}
+#preview-quick-btn .pq-dot{display:none;position:absolute;top:-2px;right:-2px;width:11px;height:11px;border-radius:50%;background:#0a84ff;border:2px solid var(--card);}
+#preview-quick-btn.on .pq-dot{display:block;}
 #analog-clock{position:fixed;left:20px;bottom:calc(var(--sab) + 368px);z-index:55;width:44px;height:44px;display:none;pointer-events:none;filter:drop-shadow(0 3px 10px rgba(0,0,0,0.14));}
 #analog-clock.visible{display:block;}
 #analog-clock svg{width:100%;height:100%;display:block;backdrop-filter:var(--glass-blur);border-radius:50%;}
@@ -1071,11 +1100,11 @@ body.test-mode-open #real-weather-chip{display:none;}
 .house-sleep #p-body{animation:houseBreathe 3s ease-in-out infinite;}
 @keyframes houseBreathe{0%,100%{transform:scaleY(1);}50%{transform:scaleY(1.06);}}
 #house-bubble{position:absolute;bottom:115px;left:50%;transform:translateX(-50%);background:#fff;border-radius:16px;padding:8px 14px;font-size:var(--fs-sm);font-weight:600;color:#3a2410;box-shadow:0 3px 12px rgba(0,0,0,0.15);opacity:0;transition:opacity 0.4s;pointer-events:none;max-width:240px;text-align:center;z-index:6;}
-#house-exit-row{position:absolute;top:10px;right:12px;z-index:6;display:flex;gap:8px;align-items:center;}
+#house-exit-row{position:absolute;top:calc(var(--sat) + 8px);right:14px;z-index:6;display:flex;gap:8px;align-items:center;}
 #house-exit-btn{background:rgba(255,255,255,0.88);border:none;border-radius:20px;padding:7px 14px;font-size:var(--fs-sm);font-weight:700;color:#3a2410;cursor:pointer;box-shadow:0 2px 8px rgba(0,0,0,0.12);}
 #house-close-btn{background:rgba(255,255,255,0.88);border:none;border-radius:50%;width:34px;height:34px;font-size:var(--fs-md);font-weight:700;color:#3a2410;cursor:pointer;box-shadow:0 2px 8px rgba(0,0,0,0.12);display:flex;align-items:center;justify-content:center;position:relative;}
 #house-close-btn::after{content:'';position:absolute;inset:-5px;}
-#house-time-label{position:absolute;top:10px;left:12px;background:rgba(255,255,255,0.75);border-radius:12px;padding:4px 10px;font-size:var(--fs-sm);font-weight:600;color:#3a2410;z-index:6;}
+#house-time-label{position:absolute;top:calc(var(--sat) + 8px);left:12px;background:rgba(255,255,255,0.75);border-radius:12px;padding:4px 10px;font-size:var(--fs-sm);font-weight:600;color:#3a2410;z-index:6;}
 #house-panel{flex:1;overflow-y:auto;padding:12px 16px calc(var(--sab) + 24px);background:#2a1a0e;}
 .owner-loc-btn{flex:1;padding:10px 6px;border-radius:12px;border:1.5px solid rgba(255,255,255,0.15);background:rgba(255,255,255,0.07);color:rgba(255,255,255,0.7);font-size:var(--fs-sm);font-weight:600;cursor:pointer;transition:all 0.2s;}
 .owner-loc-btn:active{transform:scale(0.95);}
@@ -1112,8 +1141,8 @@ body.test-mode-open #real-weather-chip{display:none;}
 #backyard-scene svg{width:100%;display:block;}
 #backyard-puppy-wrap{position:absolute;left:50%;bottom:18%;transform:translateX(-50%);transition:left 0.8s ease;}
 #backyard-bubble{position:absolute;bottom:56%;left:50%;transform:translateX(-50%);background:#fff;border-radius:16px;padding:8px 14px;font-size:var(--fs-sm);font-weight:600;color:#3a2410;box-shadow:0 3px 12px rgba(0,0,0,0.15);opacity:0;transition:opacity 0.4s;pointer-events:none;max-width:220px;text-align:center;z-index:6;}
-#backyard-exit-btn{position:absolute;top:10px;right:12px;background:rgba(255,255,255,0.88);border:none;border-radius:20px;padding:7px 14px;font-size:var(--fs-sm);font-weight:700;color:#3a2410;cursor:pointer;box-shadow:0 2px 8px rgba(0,0,0,0.12);z-index:6;}
-#backyard-info-badge{position:absolute;top:10px;left:12px;background:rgba(255,255,255,0.75);border-radius:12px;padding:4px 10px;font-size:var(--fs-sm);font-weight:700;color:#3a2410;z-index:6;display:flex;align-items:center;gap:5px;}
+#backyard-exit-btn{position:absolute;top:16px;right:12px;background:rgba(255,255,255,0.88);border:none;border-radius:20px;padding:7px 14px;font-size:var(--fs-sm);font-weight:700;color:#3a2410;cursor:pointer;box-shadow:0 2px 8px rgba(0,0,0,0.12);z-index:6;}
+#backyard-info-badge{position:absolute;top:16px;left:12px;background:rgba(255,255,255,0.75);border-radius:12px;padding:4px 10px;font-size:var(--fs-sm);font-weight:700;color:#3a2410;z-index:6;display:flex;align-items:center;gap:5px;}
 #backyard-info-btn{background:none;border:none;font-size:var(--fs-sm);cursor:pointer;padding:0;line-height:1;}
 #backyard-visitor{position:absolute;top:53%;left:-8%;transform:translateY(-50%) scaleX(1);font-size:var(--fs-xl);line-height:1;z-index:5;opacity:0;pointer-events:none;transition:left 7s linear,opacity 0.3s;filter:drop-shadow(0 2px 2px rgba(0,0,0,0.2));}
 #backyard-visitor.visible{opacity:1;}
@@ -1228,7 +1257,7 @@ body.night-mode #talk-screen-card::after{background:var(--night);}
 #settings-btn{position:fixed;top:calc(var(--sat) + 10px);right:14px;z-index:55;width:42px;height:42px;background:var(--card);border:1px solid var(--card-border);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:var(--fs-xl);cursor:pointer;backdrop-filter:var(--glass-blur);}
 
 /* settings menu */
-#settings-menu{position:fixed;top:calc(var(--sat) + 48px);right:14px;z-index:200;background:var(--card);border-radius:16px;border:1px solid var(--card-border);backdrop-filter:var(--glass-blur);overflow:hidden;transform:scale(0.9) translateY(-10px);opacity:0;pointer-events:none;transition:all 0.2s cubic-bezier(0.34,1.56,0.64,1);transform-origin:top right;box-shadow:0 1px 2px rgba(0,0,0,0.06),0 8px 24px rgba(0,0,0,0.12),0 20px 48px rgba(0,0,0,0.08),inset 0 1px 0 var(--rim-light);}
+#settings-menu{position:fixed;top:calc(var(--sat) + 48px);right:14px;z-index:200;background:var(--card);border-radius:16px;border:1px solid var(--card-border);backdrop-filter:var(--glass-blur);overflow-y:auto;overflow-x:hidden;-webkit-overflow-scrolling:touch;overscroll-behavior:contain;max-height:calc(100vh - var(--sat) - var(--sab) - 68px);transform:scale(0.9) translateY(-10px);opacity:0;pointer-events:none;transition:all 0.2s cubic-bezier(0.34,1.56,0.64,1);transform-origin:top right;box-shadow:0 1px 2px rgba(0,0,0,0.06),0 8px 24px rgba(0,0,0,0.12),0 20px 48px rgba(0,0,0,0.08),inset 0 1px 0 var(--rim-light);}
 #settings-menu.open{transform:scale(1) translateY(0);opacity:1;pointer-events:all;}
 .smenu-item{display:flex;align-items:center;gap:10px;padding:13px 16px;font-size:var(--fs-sm);font-weight:600;color:var(--txt);cursor:pointer;border-bottom:1px solid rgba(0,0,0,0.06);}
 
@@ -1635,6 +1664,7 @@ body.night-mode #talk-screen-card::after{background:var(--night);}
   <div class="smenu-item" id="smenu-baby"><span class="smenu-icon">🐕</span>Baby puppy</div>
   <div class="smenu-item" id="smenu-sunglasses"><span class="smenu-icon">😎</span>Sunglasses <span id="sunglasses-status" style="font-size:var(--fs-2xs);font-weight:800;color:var(--txt-m);margin-left:6px;">Off</span></div>
   <div class="smenu-item" id="smenu-raincoat"><span class="smenu-icon">🧥</span>Raincoat <span id="raincoat-status" style="font-size:var(--fs-2xs);font-weight:800;color:var(--txt-m);margin-left:6px;">Off</span></div>
+  <div class="smenu-item" id="smenu-preview-mode"><span class="smenu-icon">📱</span>Preview mode — <span id="preview-mode-status">Auto</span></div>
   <div class="smenu-item" id="smenu-lab-mode"><span class="smenu-icon">🧫</span>Lab Mode <span style="font-size:var(--fs-2xs);font-weight:800;color:#3a2a00;background:#f5c518;border-radius:7px;padding:1.5px 6px;margin-left:6px;">log</span></div>
   <div class="smenu-item" id="smenu-activity-log"><span class="smenu-icon">📋</span>Activity Log</div>
   <div class="smenu-item" id="smenu-user-manual"><span class="smenu-icon">📖</span>User Manual</div>
@@ -2048,6 +2078,10 @@ body.night-mode #talk-screen-card::after{background:var(--night);}
      partly hid these two when they were tried there. -->
 <button id="autosync-quick-btn" class="apple-quick-btn" title="Auto Sync (Health)">🍏<span class="aq-dot"></span></button>
 <button id="health-quick-btn" class="apple-quick-btn" title="Add steps from Health (manual)">🍎</button>
+<!-- Preview mode quick access — same toggle as Settings → Preview mode,
+     one tap away for checking the real iPhone frame while developing on
+     desktop. Blue dot shows when a mode other than Auto is forced on. -->
+<button id="preview-quick-btn" class="quick-access-btn" title="Preview mode">📱<span class="pq-dot"></span></button>
 <div id="analog-clock" title="Current time">
   <svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
     <circle cx="50" cy="50" r="46" fill="var(--card)" stroke="var(--card-border)" stroke-width="2"/>
@@ -3042,7 +3076,7 @@ body.night-mode #talk-screen-card::after{background:var(--night);}
       <button id="house-close-btn" onclick="exitPuppyHouse()" title="Close">✕</button>
     </div>
     <div id="house-time-label"></div>
-    <div id="house-room-label" style="position:absolute;top:44px;left:12px;background:rgba(255,255,255,0.75);border-radius:12px;padding:4px 10px;font-size:var(--fs-sm);font-weight:700;color:#3a2410;z-index:6;display:flex;align-items:center;gap:5px;">🏡 Puppy's Room<button id="room3-info-btn" title="What is this room?" style="background:none;border:none;font-size:var(--fs-sm);cursor:pointer;padding:0;line-height:1;">ℹ️</button></div>
+    <div id="house-room-label" style="position:absolute;top:calc(var(--sat) + 42px);left:12px;background:rgba(255,255,255,0.75);border-radius:12px;padding:4px 10px;font-size:var(--fs-sm);font-weight:700;color:#3a2410;z-index:6;display:flex;align-items:center;gap:5px;">🏡 Puppy's Room<button id="room3-info-btn" title="What is this room?" style="background:none;border:none;font-size:var(--fs-sm);cursor:pointer;padding:0;line-height:1;">ℹ️</button></div>
   </div>
   <div id="house-panel">
     <div style="display:flex;gap:6px;margin-bottom:12px">
@@ -9187,6 +9221,36 @@ function restoreFromData(raw){
 }
 
 // Settings menu
+/* Top icon row (Discover/Friend Clocks/Season/Accessories) + the "steps →"
+   ribbon used fixed pixel offsets assuming the HUD stat-cards row is always
+   exactly one height. At iPhone-width (~390px) the cards render a touch
+   taller, so those hardcoded offsets landed on top of the cards instead of
+   below them — confirmed live at 390px, not assumed from the CSS. Measuring
+   the HUD's real rendered height and positioning everything below it (with
+   a small buffer) fixes it for every width and can't regress the same way
+   again, instead of re-tuning more magic numbers. */
+function layoutTopStack(){
+  const hud=document.getElementById('hud');
+  if(!hud)return;
+  const hudBottom=Math.ceil(hud.getBoundingClientRect().bottom);
+  const iconTop=hudBottom+6;
+  ['discover-btn','friend-clock-btn','season-quick-btn','accessories-btn'].forEach(id=>{
+    const el=document.getElementById(id);
+    if(el)el.style.top=iconTop+'px';
+  });
+  const ribbon=document.getElementById('shared-ribbon');
+  if(ribbon)ribbon.style.top=(iconTop+44+6)+'px';
+}
+window.addEventListener('load',layoutTopStack);
+window.addEventListener('resize',layoutTopStack);
+window.addEventListener('orientationchange',layoutTopStack);
+if(window.ResizeObserver){
+  const hudEl=document.getElementById('hud');
+  if(hudEl)new ResizeObserver(layoutTopStack).observe(hudEl);
+}
+if(document.fonts&&document.fonts.ready)document.fonts.ready.then(layoutTopStack);
+layoutTopStack();
+
 const settingsBtn=document.getElementById('settings-btn');
 const settingsMenu=document.getElementById('settings-menu');
 settingsBtn.addEventListener('click',e=>{e.stopPropagation();settingsMenu.classList.toggle('open');});
@@ -9201,14 +9265,13 @@ document.getElementById('smenu-import').addEventListener('click',()=>{
 });
 document.getElementById('btn-import-confirm').addEventListener('click',()=>{
   const val=parseInt(document.getElementById('import-input').value);
-  if(val>0&&val>steps){
-    const added=val-steps;steps=val;
+  if(val>0){
+    const added=Math.min(val,50000); // sanity cap in case of a fat-fingered typo
+    steps+=added;
     stepsInSession+=Math.min(added,200);
     updateMoodFromSession();updateHUD();updateBadges();checkPuppyMilestones();saveState();
     document.getElementById('import-screen').style.display='none';
     showBanner(`+${added.toLocaleString()} steps added! 🐾`);
-  } else if(val<=steps){
-    showBanner('That\'s less than your current count!');
   } else {
     showBanner('Please enter a valid step count');
   }
@@ -9772,6 +9835,37 @@ document.getElementById('lab-quick-btn').addEventListener('click',()=>{
 document.getElementById('close-lab-mode').addEventListener('click',()=>{
   document.getElementById('lab-mode-screen').style.bottom='-100vh';
 });
+
+/* Preview mode — dev/QA toggle so an actual iPhone frame (with real
+   Dynamic-Island-sized safe areas) can be checked from any desktop
+   browser, without physically resizing the window (which only ever gives
+   the 44px fallback, not a real device's numbers — see the ✕-button
+   overlap bug this caught). Cycles Auto → Phone → Desktop → Auto. */
+const PREVIEW_MODES=['auto','phone','desktop'];
+const PREVIEW_LABELS={auto:'Auto',phone:'📱 iPhone 14',desktop:'💻 Desktop'};
+function applyPreviewMode(mode){
+  document.documentElement.classList.remove('force-phone-preview','force-desktop-preview');
+  if(mode==='phone')document.documentElement.classList.add('force-phone-preview');
+  if(mode==='desktop')document.documentElement.classList.add('force-desktop-preview');
+  document.getElementById('preview-mode-status').textContent=PREVIEW_LABELS[mode];
+  document.getElementById('preview-quick-btn').classList.toggle('on',mode!=='auto');
+  document.getElementById('preview-quick-btn').title=mode==='auto'?'Preview mode':'Preview mode: '+PREVIEW_LABELS[mode];
+  try{localStorage.setItem('pt_preview_mode',mode);}catch(e){}
+  requestAnimationFrame(()=>requestAnimationFrame(layoutTopStack));
+}
+(function initPreviewMode(){
+  let saved='auto';
+  try{saved=localStorage.getItem('pt_preview_mode')||'auto';}catch(e){}
+  applyPreviewMode(saved);
+})();
+function cyclePreviewMode(){
+  let saved='auto';
+  try{saved=localStorage.getItem('pt_preview_mode')||'auto';}catch(e){}
+  const next=PREVIEW_MODES[(PREVIEW_MODES.indexOf(saved)+1)%PREVIEW_MODES.length];
+  applyPreviewMode(next);
+}
+document.getElementById('smenu-preview-mode').addEventListener('click',cyclePreviewMode);
+document.getElementById('preview-quick-btn').addEventListener('click',cyclePreviewMode);
 
 let testModeActive=false;
 const testPanel=document.getElementById('test-panel');
