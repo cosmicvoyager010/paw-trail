@@ -85,7 +85,7 @@
      Explorer destination picker.
 
 ───────────────────────────────────────────────────────────────────────────
- THIS FILE IS THE CURRENT CANONICAL VERSION (as of Jul 23, 2026).
+ THIS FILE IS THE CURRENT CANONICAL VERSION (as of Sep 1, 2026).
  If you're comparing this against another copy/branch/version in a future
  conversation or project, treat differences here as intentional unless
  this comment block or the in-app Lab/Log says otherwise.
@@ -298,10 +298,24 @@ body.night-mode{background:var(--night);}
 @keyframes seasonSnowfall{0%{transform:translateY(-10px) translateX(0);opacity:1}100%{transform:translateY(70px) translateX(8px);opacity:0}}
 #season-quick-btn{position:fixed;top:calc(var(--sat) + 48px);left:122px;z-index:60;width:44px;height:44px;border-radius:14px;background:var(--card);border:1px solid rgba(0,0,0,0.08);box-shadow:0 4px 16px rgba(0,0,0,0.12);display:flex;align-items:center;justify-content:center;font-size:var(--fs-lg);cursor:pointer;backdrop-filter:var(--glass-blur);}
 body.test-mode-open #season-quick-btn{display:none;}
+#season-quick-btn span.szn-glyph{display:inline-block;animation:seasonGlyphBreathe 4.5s ease-in-out infinite;}
+@keyframes seasonGlyphBreathe{0%,80%,100%{transform:scale(1) rotate(0deg);}88%{transform:scale(1.16) rotate(-6deg);}94%{transform:scale(1.16) rotate(6deg);}}
 /* Accessories — quick access to Sunglasses/Raincoat/Hand fan without diving
    into Settings. Same trigger-button + popover pattern as Settings itself,
    just anchored top-left in the existing icon row instead of top-right. */
 #accessories-btn{position:fixed;top:calc(var(--sat) + 48px);left:176px;z-index:60;width:44px;height:44px;border-radius:14px;background:var(--card);border:1px solid rgba(0,0,0,0.08);box-shadow:0 4px 16px rgba(0,0,0,0.12);display:flex;align-items:center;justify-content:center;font-size:var(--fs-lg);cursor:pointer;backdrop-filter:var(--glass-blur);}
+/* Dog Friends quick-access — same top-left icon row as Discover/Friend
+   Clocks/Season/Accessories, so the neighborhood-dogs system (previously
+   reachable only via a Discover tile) is visible without digging. */
+#dog-friends-btn{position:fixed;top:calc(var(--sat) + 48px);left:230px;z-index:60;width:44px;height:44px;border-radius:16px;background:#fff;border:1px solid rgba(0,0,0,0.08);box-shadow:0 4px 16px rgba(0,0,0,0.14);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:0;cursor:pointer;}
+#dog-friends-btn .dfb-bone{font-size:var(--fs-lg);line-height:1;}
+#dog-friends-btn .dfb-dog{font-size:var(--fs-sm);line-height:1;margin-top:1px;}
+body.test-mode-open #dog-friends-btn{display:none;}
+/* Mood Log quick-access — same top-left icon row, next slot after Dog
+   Friends, so the daily mood/note journal is reachable from the front
+   screen (puppy outside) without opening Settings. */
+#mood-log-btn{position:fixed;top:calc(var(--sat) + 48px);left:284px;z-index:60;width:44px;height:44px;border-radius:14px;background:var(--card);border:1px solid rgba(0,0,0,0.08);box-shadow:0 4px 16px rgba(0,0,0,0.12);display:flex;align-items:center;justify-content:center;font-size:var(--fs-lg);cursor:pointer;backdrop-filter:var(--glass-blur);}
+body.test-mode-open #mood-log-btn{display:none;}
 body.test-mode-open #accessories-btn{display:none;}
 #accessories-btn .acc-dot{position:absolute;top:-2px;right:-2px;width:12px;height:12px;border-radius:50%;background:#34c759;border:2px solid var(--card);display:none;}
 #accessories-btn.has-active .acc-dot{display:block;}
@@ -408,6 +422,12 @@ body.night-mode #talk-bubble::after{border-top-color:#3a2a1e;}
 @keyframes talkBtnFloat{0%,100%{transform:translateY(0)}50%{transform:translateY(-5px)}}
 body.test-mode-open #talk-pup-btn{display:none;}
 body.panel-open #talk-pup-btn{display:none;}
+/* "Something new to say" dot — lights up whenever the puppy's mood/state or
+   the weather changes, so the Talk button visibly signals there's a fresh,
+   context-relevant line waiting (not just the same generic greeting every
+   time). Clears the moment Talk is actually opened. See setTalkNews(). */
+#talk-pup-btn .tpb-dot{position:absolute;top:-2px;right:-2px;width:12px;height:12px;border-radius:50%;background:#34c759;border:2px solid var(--card);display:none;}
+#talk-pup-btn.has-news .tpb-dot{display:block;}
 
 /* Walk reminder — floating quick-access button, mirrored on the puppy's other side */
 #walk-reminder-btn{
@@ -787,24 +807,32 @@ body.night-mode .manual-screen{background:var(--night);}
 .scale-btn{flex:1;background:rgba(255,255,255,0.07);border:1px solid rgba(255,255,255,0.12);border-radius:10px;padding:7px 4px;font-size:var(--fs-xs);font-weight:700;color:rgba(255,255,255,0.55);cursor:pointer;text-align:center;line-height:1.3;transition:all 0.2s;}
 .scale-btn .sb-num{display:block;font-size:var(--fs-sm);}
 .scale-btn.active{background:rgba(255,215,106,0.16);border-color:rgba(255,215,106,0.5);color:#ffd76a;}
-#human-reach-legend{font-size:var(--fs-2xs);font-weight:600;color:rgba(255,255,255,0.45);text-align:center;padding:2px 10px 4px;letter-spacing:0.1px;}
-#human-reach-legend span{color:#5ac8fa;}
+#human-reach-legend,#flight-reach-legend{font-size:var(--fs-xs);font-weight:600;color:rgba(255,255,255,0.62);text-align:center;padding:2px 10px 4px;letter-spacing:0.1px;}
+#human-reach-legend span,#flight-reach-legend span{color:#5ac8fa;}
 #space-scene{position:relative;flex:1;overflow-x:auto;overflow-y:hidden;min-height:160px;-webkit-overflow-scrolling:touch;}
 #orrery-svg{display:block;}
 .craft-pulse-ring{animation:craftPulse 1.4s ease-in-out infinite;}
+/* Puppy-on-map bounce — small vertical idle bob applied to the whole marker
+   group (paw/plane pin) on Ancient Worlds and Modern Earth, so the puppy
+   reads as actually standing/riding there and looking around, not a static
+   pinned icon. Space Explorer's probe marker deliberately does NOT get this
+   — it's an uncrewed real spacecraft by design (see file header notes), no
+   puppy aboard, so it keeps its existing pulse-only glow with no bounce. */
+.map-puppy-bounce{animation:mapPuppyBounce 1.8s ease-in-out infinite;transform-box:fill-box;transform-origin:center;}
+@keyframes mapPuppyBounce{0%,100%{transform:translateY(0)}50%{transform:translateY(-3px)}}
 .orrery-body-tap{cursor:pointer;}
 .orrery-tap-label{pointer-events:none;transition:opacity 0.15s;}
 #space-canvas{position:absolute;inset:0;width:100%;height:100%;}
 #spacecraft{position:absolute;left:50%;bottom:15%;transform:translateX(-50%);font-size:36px;transition:bottom 1s ease;animation:engineGlow 1.5s ease-in-out infinite;}
 #space-body{position:absolute;right:24px;border-radius:50%;transition:all 0.8s;}
 #space-label{position:absolute;right:8px;font-size:var(--fs-2xs);color:rgba(255,255,255,0.55);font-weight:600;text-align:center;transition:all 0.8s;}
-#space-info{padding:12px 16px calc(var(--sab) + 12px);background:var(--space-mid);border-top:1px solid rgba(255,255,255,0.07);flex-shrink:0;}
+#space-info,#galaxy-info{padding:12px 16px calc(var(--sab) + 12px);background:var(--space-mid);border-top:1px solid rgba(255,255,255,0.07);flex-shrink:0;}
 .s-name{font-size:var(--fs-xl);font-weight:800;color:#fff;margin-bottom:5px;}
 .s-fact{font-size:var(--fs-base);color:rgba(255,255,255,0.75);line-height:1.6;margin-bottom:10px;}
 .s-dist{font-size:var(--fs-sm);font-weight:700;color:var(--gold);text-transform:uppercase;letter-spacing:0.8px;}
-#sp-progress-track{background:rgba(255,255,255,0.1);border-radius:10px;height:5px;margin-top:5px;overflow:hidden;}
+#sp-progress-track,#gx-progress-track{background:rgba(255,255,255,0.1);border-radius:10px;height:5px;margin-top:5px;overflow:hidden;}
 #sp-progress-fill{height:100%;background:linear-gradient(90deg,#4466ff,var(--gold));border-radius:10px;transition:width 0.4s;width:0%;}
-.s-next{font-size:var(--fs-sm);color:rgba(255,255,255,0.45);margin-top:4px;}
+.s-next{font-size:var(--fs-sm);color:rgba(255,255,255,0.62);margin-top:4px;font-weight:600;}
 #panel-galaxy{display:none;flex-direction:column;height:100%;background:linear-gradient(180deg,#0a0518,#1a0f2e);color:#fff;position:relative;}
 #panel-galaxy.active{display:flex;}
 .gx-scale-btn.active{background:rgba(255,215,106,0.16);border-color:rgba(255,215,106,0.5);color:#ffd76a;}
@@ -818,12 +846,14 @@ body.night-mode .manual-screen{background:var(--night);}
 #panel-story.active{display:flex;}
 #panel-living{display:none;flex-direction:column;height:100%;background:linear-gradient(180deg,#1a3a2a,#0d2618);color:#fff;}
 #panel-living.active{display:flex;}
-#flight-scene{position:relative;flex-shrink:0;width:100%;overflow:hidden;}
+#flight-scene{position:relative;flex-shrink:0;width:100%;min-height:200px;overflow:hidden;}
 #flight-picker-bar{display:flex;align-items:flex-end;gap:8px;padding:10px 16px 4px;flex-shrink:0;}
 .fp-field{flex:1;display:flex;flex-direction:column;gap:3px;min-width:0;}
 .fp-field label{font-size:var(--fs-2xs);font-weight:800;color:rgba(255,255,255,0.55);text-transform:uppercase;letter-spacing:0.4px;}
 .fp-field select{width:100%;padding:9px 8px;border-radius:10px;border:1px solid rgba(255,255,255,0.2);background:rgba(255,255,255,0.08);color:#fff;font-size:var(--fs-sm);font-weight:700;appearance:none;-webkit-appearance:none;}
 .fp-field select option{background:#0a2540;color:#fff;}
+.fp-field-flash{animation:fpFieldFlash 0.9s ease-out;}
+@keyframes fpFieldFlash{0%{box-shadow:0 0 0 3px rgba(255,204,102,0.9);}100%{box-shadow:0 0 0 3px rgba(255,204,102,0);}}
 #flight-swap-btn{flex-shrink:0;width:34px;height:34px;border-radius:50%;border:1px solid rgba(255,255,255,0.25);background:rgba(255,255,255,0.1);color:#fff;font-size:var(--fs-md);cursor:pointer;margin-bottom:1px;position:relative;}
 #flight-swap-btn::after{content:'';position:absolute;inset:-5px;}
 #flight-swap-btn:active{background:rgba(255,255,255,0.2);}
@@ -833,7 +863,7 @@ body.night-mode .manual-screen{background:var(--night);}
 #ascent-continue-btn:active,#scale-continue-btn:active{background:rgba(245,197,24,0.3);}
 /* flight sub-tabs: World Map / Ascent Ladder / Scale */
 #flight-view-toggle{display:flex;gap:6px;padding:10px 16px 6px;flex-shrink:0;}
-.fv-btn{flex:1;background:rgba(255,255,255,0.07);border:1px solid rgba(255,255,255,0.12);border-radius:10px;padding:7px 4px;font-size:var(--fs-xs);font-weight:700;color:rgba(255,255,255,0.55);cursor:pointer;text-align:center;transition:all 0.2s;}
+.fv-btn{flex:1;background:rgba(255,255,255,0.07);border:1px solid rgba(255,255,255,0.12);border-radius:10px;padding:8px 4px;font-size:var(--fs-xs);font-weight:700;color:rgba(255,255,255,0.55);cursor:pointer;text-align:center;line-height:1.25;transition:all 0.2s;}
 .fv-btn.active{background:rgba(90,200,255,0.16);border-color:rgba(90,200,255,0.5);color:#7ed3ff;}
 .flight-view{display:none;flex-direction:column;flex:1;min-height:0;}
 .flight-view.active{display:flex;}
@@ -1014,6 +1044,15 @@ body.night-mode #baby-screen{background:var(--night);}
 /* ══ HOUSE MENU — picks Room 1/2/3 ══ */
 #house-menu-btn{position:fixed;bottom:calc(var(--sab) + 96px);left:16px;z-index:55;width:56px;height:56px;border-radius:50%;background:var(--card);border:1.5px solid rgba(0,0,0,0.08);box-shadow:0 4px 16px rgba(0,0,0,0.12);display:flex;flex-direction:column;align-items:center;justify-content:center;font-size:var(--fs-xl);cursor:pointer;backdrop-filter:var(--glass-blur);}
 #house-menu-btn .hmb-label{font-size:9px;font-weight:800;color:var(--txt-m);letter-spacing:0.5px;margin-top:-2px;}
+/* "Room needs a peek" dot — lights up whenever it's a hot day (real summer or
+   self-reported Hot mood), the exact condition that already swaps in the
+   room's AC/fan decor (see applyPuppyRoomSeason's `cooling` flag). The fan
+   feature only lives inside the room, so nothing on the main screen ever
+   hinted it was relevant — this surfaces that instead of requiring the
+   owner to remember to go check. Same persistent-badge pattern as the
+   Accessories button's existing has-active dot, not a one-off event. */
+#house-menu-btn .hmb-dot{position:absolute;top:4px;right:6px;width:12px;height:12px;border-radius:50%;background:#ff9500;border:2px solid var(--card);display:none;}
+#house-menu-btn.has-news .hmb-dot{display:block;}
 body.test-mode-open #house-menu-btn{display:none;}
 #house-menu-popup{position:fixed;bottom:calc(var(--sab) + 264px);left:16px;z-index:200;background:var(--card);border-radius:16px;border:1px solid var(--card-border);backdrop-filter:var(--glass-blur);overflow:hidden;min-width:210px;opacity:0;pointer-events:none;transform:scale(0.9);transform-origin:bottom left;transition:all 0.2s cubic-bezier(0.34,1.56,0.64,1);box-shadow:0 8px 30px rgba(0,0,0,0.2);}
 #house-menu-popup.open{opacity:1;transform:scale(1);pointer-events:all;}
@@ -1136,7 +1175,29 @@ body.test-mode-open #real-weather-chip{display:none;}
 /* ── Backyard overlay ── */
 #backyard-overlay{display:none;position:fixed;inset:0;z-index:150;flex-direction:column;background:#6ab04c;}
 #backyard-overlay.open{display:flex;}
+#friendroom-overlay{display:none;position:fixed;inset:0;z-index:150;flex-direction:column;background:linear-gradient(180deg,#ffd6e0,#ffb8cc);}
+#friendroom-overlay.open{display:flex;}
+#playroom-overlay{display:none;}
 #playroom-overlay.open{display:flex;}
+/* Maple tail wag */
+@keyframes prTailWag{0%,100%{transform:rotate(0deg);}30%{transform:rotate(18deg);}70%{transform:rotate(-12deg);}}
+#pr-tail.wag{transform-origin:111px 65px;animation:prTailWag 0.35s ease 4;}
+/* your puppy entering from door */
+@keyframes prEnterSlide{from{left:8%;opacity:0;}to{left:28%;opacity:1;}}
+#pr-your-puppy-wrap.entering{animation:prEnterSlide 0.7s cubic-bezier(0.4,0,0.2,1) forwards;}
+/* play bounce — both dogs */
+@keyframes prBounce{0%,100%{transform:translateX(-50%) scale(1);}40%{transform:translateX(-50%) scale(1.15) translateY(-7px);}70%{transform:translateX(-50%) scale(0.95) translateY(2px);}}
+#pr-maple-wrap.bounce,#pr-your-puppy-wrap.bounce{animation:prBounce 0.5s ease;}
+/* nap — slight tilt */
+@keyframes prNapTilt{0%,100%{transform:translateX(-50%) rotate(0deg);}50%{transform:translateX(-50%) rotate(12deg);}}
+#pr-maple-wrap.napping,#pr-your-puppy-wrap.napping{animation:prNapTilt 0.6s ease forwards;}
+/* play bow — front-down/rear-up invitation, both dogs dip together */
+@keyframes prBow{0%,100%{transform:translateX(-50%) scale(1) translateY(0);}45%{transform:translateX(-50%) scale(0.94) translateY(6px);}}
+#pr-maple-wrap.bowing,#pr-your-puppy-wrap.bowing{animation:prBow 0.65s ease-in-out 2;}
+/* watch over — only the bigger/older puppy settles down close and still,
+   since Maple (younger, smaller) is the one being watched, not moving */
+@keyframes prSettle{0%{transform:translateX(-50%) translateY(0);}100%{transform:translateX(-50%) translateY(3px);}}
+#pr-your-puppy-wrap.settling{animation:prSettle 0.7s ease forwards;}
 #backyard-scene{flex-shrink:0;position:relative;}
 #backyard-scene svg{width:100%;display:block;}
 #backyard-puppy-wrap{position:absolute;left:50%;bottom:18%;transform:translateX(-50%);transition:left 0.8s ease;}
@@ -1608,15 +1669,17 @@ body.night-mode #talk-screen-card::after{background:var(--night);}
 </div>
 
 <!-- Talk to Puppy — floating, right beside the puppy for quick access -->
-<button id="talk-pup-btn" title="Talk to your puppy">💬</button>
+<button id="talk-pup-btn" title="Talk to your puppy">💬<span class="tpb-dot"></span></button>
 <button id="walk-reminder-btn" title="Walk reminder">⏰<span class="wrb-dot"></span></button>
 
 <!-- Discover hub entry point -->
 <button id="discover-btn" title="Discover">🧭</button>
 <!-- Friend Clocks quick-access — same modal as Settings → Friend Clocks -->
 <button id="friend-clock-btn" title="Friend Clocks"><span class="fcb-clock">🕐</span><span class="fcb-dog">🐶</span></button>
-<button id="season-quick-btn" title="Season — tap to change">🌸<span id="season-quick-dot" class="wrb-dot" style="display:none;"></span></button>
+<button id="season-quick-btn" title="Season — tap to change"><span class="szn-glyph">🌸</span><span id="season-quick-dot" class="wrb-dot" style="display:none;"></span></button>
 <button id="accessories-btn" title="Accessories">🎒<span class="acc-dot"></span></button>
+<button id="dog-friends-btn" title="Dog Friends"><span class="dfb-bone">🦴</span><span class="dfb-dog">🐶</span></button>
+<button id="mood-log-btn" title="Mood Log">🐾</button>
 <div id="accessories-menu">
   <button class="acc-chip" id="acc-chip-sunglasses">
     <span class="acc-chip-icon">😎</span>
@@ -1667,6 +1730,7 @@ body.night-mode #talk-screen-card::after{background:var(--night);}
   <div class="smenu-item" id="smenu-preview-mode"><span class="smenu-icon">📱</span>Preview mode — <span id="preview-mode-status">Auto</span></div>
   <div class="smenu-item" id="smenu-lab-mode"><span class="smenu-icon">🧫</span>Lab Mode <span style="font-size:var(--fs-2xs);font-weight:800;color:#3a2a00;background:#f5c518;border-radius:7px;padding:1.5px 6px;margin-left:6px;">log</span></div>
   <div class="smenu-item" id="smenu-activity-log"><span class="smenu-icon">📋</span>Activity Log</div>
+  <div class="smenu-item" id="smenu-mood-log"><span class="smenu-icon">🐾</span>Mood Log</div>
   <div class="smenu-item" id="smenu-user-manual"><span class="smenu-icon">📖</span>User Manual</div>
   <div class="smenu-item" id="smenu-health-manual"><span class="smenu-icon">🍏</span>Apple Health Manual</div>
   <div class="smenu-item" id="smenu-changelog"><span class="smenu-icon">🧾</span>What's changed</div>
@@ -2009,6 +2073,33 @@ body.night-mode #talk-screen-card::after{background:var(--night);}
     </div>
     <div style="font-size:var(--fs-2xs);color:var(--txt-m);margin-top:6px;">Opens Owner's Room and starts the check-in window. Tap 🥰 Pet in there before it ends to see the "noticed" path, or use "Skip to give-up" to jump straight to puppy heading back to Puppy's Room through the door.</div>
   </div>
+
+  <!-- Jump to feature — opens any panel directly for QA, no step requirement -->
+  <div style="margin-top:12px;">
+    <div class="section-label">🧭 Jump to feature</div>
+    <div style="display:flex;gap:6px;flex-wrap:wrap;">
+      <button class="panel-jump-btn chip-btn" data-panel="story">📖 Story of Earth</button>
+      <button class="panel-jump-btn chip-btn" data-panel="earth">🏺 Ancient Worlds</button>
+      <button class="panel-jump-btn chip-btn" data-panel="living">🌿 Living Earth</button>
+      <button class="panel-jump-btn chip-btn" data-panel="flight" data-sub="world">🗺️ World Map</button>
+      <button class="panel-jump-btn chip-btn" data-panel="flight" data-sub="ascent">🪜 Ascent Ladder</button>
+      <button class="panel-jump-btn chip-btn" data-panel="flight" data-sub="scale">📏 Scale</button>
+      <button class="panel-jump-btn chip-btn" data-panel="flight" data-sub="journey">🌌 Scale Journey</button>
+      <button class="panel-jump-btn chip-btn" data-panel="space">🚀 Space Explorer</button>
+      <button class="panel-jump-btn chip-btn" data-panel="galaxy">🌠 Beyond the Solar System</button>
+      <button class="panel-jump-btn chip-btn" data-panel="biggalaxy">🌌 How Big?</button>
+      <button class="panel-jump-btn chip-btn" data-panel="telescope">🔭 Observatory</button>
+      <button class="panel-jump-btn chip-btn" data-panel="myth">🏛️🧙 Meet History &amp; Legend</button>
+      <button class="panel-jump-btn chip-btn" data-panel="puppylife">🐾 Puppy Discoveries</button>
+      <button class="panel-jump-btn chip-btn" data-panel="home">🛋️ Room 1</button>
+      <button class="panel-jump-btn chip-btn" data-house="room2">🖼️ Cozy Corner</button>
+      <button class="panel-jump-btn chip-btn" data-house="room3">🏡 Owner's Room</button>
+      <button class="panel-jump-btn chip-btn" data-house="playroom">🧸 Maple's Room</button>
+      <button class="panel-jump-btn chip-btn" data-house="friendroom">🐕 Puppy's Friend</button>
+      <button class="panel-jump-btn chip-btn" data-house="backyard">🌳 Backyard</button>
+    </div>
+    <div style="font-size:var(--fs-2xs);color:var(--txt-m);margin-top:6px;line-height:1.5;">Opens the screen directly. Content that unlocks by step count inside a screen still needs real/added steps — this only skips getting to the screen itself.</div>
+  </div>
   </div><!-- /test-tab-world -->
 </div>
 
@@ -2056,13 +2147,14 @@ body.night-mode #talk-screen-card::after{background:var(--night);}
 ">🚴</button>
 
 <!-- Puppy's House menu — picks between Room 1/2/3 -->
-<button id="house-menu-btn" title="Puppy's House">🏠<span class="hmb-label">HOUSE</span></button>
+<button id="house-menu-btn" title="Puppy's House">🏠<span class="hmb-label">HOUSE</span><span class="hmb-dot"></span></button>
 <div id="house-menu-popup">
   <div class="house-menu-item" data-house-goto="puppyroom"><span class="house-menu-icon">🏡</span>Room 1 · Puppy's Room</div>
   <div class="house-menu-item" data-house-goto="room2"><span class="house-menu-icon">🖼️</span>Room 2 · Cozy Corner</div>
   <div class="house-menu-item" data-house-goto="ownerroom"><span class="house-menu-icon">🛋️</span>Room 3 · Owner's Room</div>
   <div class="house-menu-item" data-house-goto="backyard"><span class="house-menu-icon">🌳</span>Backyard</div>
-  <div class="house-menu-item" data-house-goto="playroom"><span class="house-menu-icon">🧸</span>Playroom <span style="font-size:var(--fs-2xs);font-weight:800;color:#e08a1e;background:rgba(224,138,30,0.15);border-radius:8px;padding:2px 6px;margin-left:2px;">🚧 SOON</span></div>
+  <div class="house-menu-item" data-house-goto="playroom"><span class="house-menu-icon">🧸</span>Playroom · Maple's Room</div>
+  <div class="house-menu-item" data-house-goto="friendroom"><span class="house-menu-icon">🐕</span>Puppy's Friend</div>
 </div>
 
 <!-- Quick access — Lab/Log (build log + notes) and Test Mode, always visible
@@ -2275,11 +2367,11 @@ body.night-mode #talk-screen-card::after{background:var(--night);}
         <g id="galaxy-craft"></g>
       </svg>
     </div>
-    <div id="space-info">
+    <div id="galaxy-info">
       <div class="s-name" id="gx-name">The Milky Way</div>
       <div class="s-fact" id="gx-fact">Home galaxy — everything you've explored so far is inside it.</div>
       <div class="s-dist" id="gx-dist">0 light-years traveled</div>
-      <div id="sp-progress-track"><div id="gx-progress-fill" style="height:100%;background:linear-gradient(90deg,#8858c0,#ffcc66);border-radius:6px;width:0%;transition:width .4s;"></div></div>
+      <div id="gx-progress-track"><div id="gx-progress-fill" style="height:100%;background:linear-gradient(90deg,#8858c0,#ffcc66);border-radius:6px;width:0%;transition:width .4s;"></div></div>
       <div class="s-next" id="gx-next"></div>
     </div>
   </div>
@@ -2291,7 +2383,7 @@ body.night-mode #talk-screen-card::after{background:var(--night);}
     <div id="earth-route-toggle">
       <button class="er-btn" data-route="silk">🐫 Silk Road</button>
       <button class="er-btn" data-route="sea">⛵ Spice Route</button>
-      <button class="er-btn" data-route="myth">✨ Myths &amp; Legends</button>
+      <button class="er-btn" data-route="myth">✨ The Legend Trail</button>
     </div>
     <div id="earth-route-era" style="text-align:center;font-size:var(--fs-xs);font-weight:700;color:rgba(255,255,255,0.45);letter-spacing:0.3px;margin:-4px 0 8px;"></div>
 
@@ -2334,6 +2426,7 @@ body.night-mode #talk-screen-card::after{background:var(--night);}
           <line id="parchment-route-line" x1="0" y1="0" x2="0" y2="0" stroke="#8a5a1e" stroke-width="3" stroke-dasharray="2,10" opacity="0.7"/>
           <g id="parchment-cities"></g>
           <g id="parchment-craft"></g>
+          <g id="parchment-arrival-bubble" style="opacity:0;transition:opacity 0.4s;pointer-events:none;"></g>
           <rect width="2600" height="380" fill="url(#parchment-vignette)" style="pointer-events:none;"/>
         </svg>
       </div>
@@ -2417,7 +2510,7 @@ body.night-mode #talk-screen-card::after{background:var(--night);}
         <button id="flight-swap-btn" title="Swap From/To">⇄</button>
         <div class="fp-field"><label for="flight-to-select">To</label><select id="flight-to-select"></select></div>
       </div>
-      <div id="human-reach-legend">🗺️ Standard world map · pick any two safe major hubs · facts <span id="flight-updated-label">checked July 2026</span> — I refresh these by hand now and then, so they may lag reality a little</div>
+      <div id="flight-reach-legend">🗺️ Standard world map · pick any two safe major hubs · facts <span id="flight-updated-label">checked July 2026</span> — I refresh these by hand now and then, so they may lag reality a little</div>
       <div id="flight-scene">
         <svg id="flight-svg" viewBox="0 0 1000 500" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="xMidYMid meet" style="width:100%;height:auto;display:block;">
           <rect width="1000" height="500" fill="#0a2540"/>
@@ -2427,6 +2520,7 @@ body.night-mode #talk-screen-card::after{background:var(--night);}
           <g id="flight-arc"></g>
           <g id="flight-pins"></g>
           <g id="flight-craft"></g>
+          <g id="flight-arrival-bubble" style="opacity:0;transition:opacity 0.4s;pointer-events:none;"></g>
         </svg>
       </div>
       <div id="flight-info" style="padding:12px 16px 14px;background:var(--sky-mid);border-top:1px solid rgba(255,255,255,0.07);flex-shrink:0;">
@@ -3119,17 +3213,122 @@ body.night-mode #talk-screen-card::after{background:var(--night);}
   </div>
 </div>
 
-<!-- PLAYROOM — 5th room, placeholder only for now. Flagged 🚧 Under
-     Construction in the house menu; full room (autonomous puppy wandering,
-     naps by time of day, owner home/out/sleep states) intentionally not
-     ported yet — kept as a clearly-labeled stub so nothing looks "missing"
-     from the house menu while the real build is pending. -->
-<div id="playroom-overlay" class="pw-room-overlay" style="position:fixed;inset:0;z-index:150;display:none;flex-direction:column;background:linear-gradient(180deg,#ffe8c2,#ffd9a0);">
-  <div class="panel-header"><h2>🧸 Playroom</h2><button class="close-btn home-btn" onclick="goHome()" title="Back to main screen">🐾</button><button class="close-btn" id="close-playroom-overlay">✕</button></div>
-  <div style="flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:32px;">
-    <div style="font-size:56px;margin-bottom:14px;">🚧🧸🚧</div>
-    <div style="font-size:var(--fs-lg);font-weight:800;color:#3a2410;margin-bottom:8px;">Under Construction</div>
-    <div style="font-size:var(--fs-sm);line-height:1.6;color:#6a4a28;max-width:280px;">The Playroom is on the way — a 5th room for your puppy to relax, nap, and play in. Check back in a future update!</div>
+<!-- PLAYROOM — Maple's Room. Real SVG friend dog + main puppy enters together. -->
+<div id="playroom-overlay" class="pw-room-overlay" style="position:fixed;inset:0;z-index:150;flex-direction:column;background:linear-gradient(180deg,#e8d5f5,#d4b8f0);">
+  <div class="panel-header"><h2>🧸 Maple's Room</h2><button class="close-btn home-btn" onclick="goHome()" title="Back to main screen">🐾</button><button class="close-btn" id="close-playroom-overlay">✕</button></div>
+  <!-- Scene -->
+  <div id="playroom-scene" style="position:relative;flex-shrink:0;overflow:hidden;">
+    <svg viewBox="0 0 400 210" xmlns="http://www.w3.org/2000/svg" style="width:100%;display:block;">
+      <rect width="400" height="210" fill="#c9a8e8"/>
+      <rect y="160" width="400" height="50" fill="#8b5e9e"/>
+      <rect y="155" width="400" height="8" fill="#6a3d7a"/>
+      <!-- wallpaper hearts -->
+      <text x="28"  y="36"  font-size="11" opacity="0.25">♥</text><text x="90"  y="22"  font-size="9"  opacity="0.2">♥</text>
+      <text x="155" y="40"  font-size="12" opacity="0.22">♥</text><text x="220" y="18"  font-size="8"  opacity="0.18">♥</text>
+      <text x="270" y="38"  font-size="11" opacity="0.24">♥</text><text x="340" y="24"  font-size="9"  opacity="0.2">♥</text>
+      <text x="50"  y="90"  font-size="10" opacity="0.18">♥</text><text x="195" y="85"  font-size="8"  opacity="0.15">♥</text>
+      <text x="310" y="95"  font-size="11" opacity="0.18">♥</text>
+      <!-- window -->
+      <rect x="285" y="12" width="100" height="82" rx="6" fill="#b8dcf0" stroke="#7a4a8a" stroke-width="2"/>
+      <line x1="335" y1="12" x2="335" y2="94" stroke="#7a4a8a" stroke-width="1.5"/>
+      <line x1="285" y1="53" x2="385" y2="53" stroke="#7a4a8a" stroke-width="1.5"/>
+      <path d="M281,9 Q301,46 281,83 L281,11 Z" fill="#e87070" opacity="0.8"/>
+      <path d="M389,9 Q369,46 389,83 L389,11 Z" fill="#e87070" opacity="0.8"/>
+      <!-- toy chest -->
+      <rect x="10" y="118" width="66" height="42" rx="6" fill="#c86030" stroke="#8a3a10" stroke-width="1.5"/>
+      <rect x="10" y="118" width="66" height="13" rx="4" fill="#e07840" stroke="#8a3a10" stroke-width="1.5"/>
+      <circle cx="43" cy="124" r="3.5" fill="#f5c040" stroke="#b08820" stroke-width="1"/>
+      <text x="43" y="148" text-anchor="middle" font-size="18">🧸</text>
+      <!-- ball -->
+      <circle cx="150" cy="153" r="11" fill="#f04060" stroke="#b01030" stroke-width="1.5"/>
+      <path d="M144,146 Q153,153 144,160" stroke="#fff" stroke-width="1.5" fill="none" opacity="0.6"/>
+      <path d="M156,146 Q147,153 156,160" stroke="#fff" stroke-width="1.5" fill="none" opacity="0.6"/>
+      <!-- rug -->
+      <ellipse cx="210" cy="163" rx="95" ry="13" fill="#d468a8" opacity="0.5"/>
+      <ellipse cx="210" cy="163" rx="72" ry="9"  fill="#e890c8" opacity="0.35"/>
+      <!-- door (left side, where our puppy enters) -->
+      <rect x="0" y="70" width="36" height="88" rx="4" fill="#a0784a" stroke="#6a4020" stroke-width="1.5"/>
+      <circle cx="30" cy="114" r="3.5" fill="#f5c040"/>
+    </svg>
+    <!-- Maple — real SVG dog from index.html, scaled down, positioned right-centre -->
+    <div id="pr-maple-wrap" style="position:absolute;bottom:22%;left:58%;transform:translateX(-50%);text-align:center;z-index:4;">
+      <div id="pr-bubble" style="background:#fff;border-radius:14px;padding:5px 11px;font-size:var(--fs-sm);font-weight:700;color:#5a2870;box-shadow:0 3px 12px rgba(0,0,0,0.15);opacity:0;transition:opacity 0.4s;pointer-events:none;max-width:180px;margin-bottom:3px;white-space:nowrap;position:relative;left:50%;transform:translateX(-50%);">…</div>
+      <!-- Maple is a young/baby puppy — not walk-ready yet, so she's sized
+           smaller than the main puppy (who is already walk-out age). See
+           #pr-your-puppy-wrap's scale(0.85) below for the size comparison. -->
+      <svg viewBox="0 0 160 170" width="54" height="57" style="display:block;margin:0 auto;filter:drop-shadow(0 2px 5px rgba(0,0,0,0.18));">
+        <ellipse cx="80" cy="114" rx="40" ry="32" fill="#C8955A"/>
+        <g id="pr-tail"><path d="M114 107 Q134 86 128 70 Q122 57 111 65" stroke="#C8955A" stroke-width="11" fill="none" stroke-linecap="round"/></g>
+        <g><ellipse cx="62" cy="141" rx="13" ry="9" fill="#B07D42"/></g>
+        <g><ellipse cx="98" cy="141" rx="13" ry="9" fill="#B07D42"/></g>
+        <ellipse cx="80" cy="85" rx="23" ry="15" fill="#C8955A"/>
+        <ellipse cx="80" cy="69" rx="31" ry="27" fill="#C8955A"/>
+        <ellipse cx="53" cy="52" rx="15" ry="21" fill="#A06830" transform="rotate(-16 53 52)"/>
+        <ellipse cx="107" cy="52" rx="15" ry="21" fill="#A06830" transform="rotate(16 107 52)"/>
+        <ellipse cx="53" cy="54" rx="9" ry="14" fill="#C87040" transform="rotate(-16 53 54)"/>
+        <ellipse cx="107" cy="54" rx="9" ry="14" fill="#C87040" transform="rotate(16 107 54)"/>
+        <ellipse cx="67" cy="65" rx="7.5" ry="7.5" fill="#2E1A0E"/>
+        <ellipse cx="93" cy="65" rx="7.5" ry="7.5" fill="#2E1A0E"/>
+        <circle cx="70" cy="63" r="2.5" fill="white"/>
+        <circle cx="96" cy="63" r="2.5" fill="white"/>
+        <ellipse cx="80" cy="77" rx="7.5" ry="5.5" fill="#2E1A0E"/>
+        <ellipse cx="80" cy="76" rx="3" ry="2" fill="#6B4525"/>
+        <g id="pr-mouth-happy"><path d="M72 82 Q80 89 88 82" stroke="#2E1A0E" stroke-width="2.5" fill="none" stroke-linecap="round"/></g>
+        <g id="pr-mouth-excited" style="display:none"><path d="M70 80 Q80 92 90 80" stroke="#2E1A0E" stroke-width="2.5" fill="none" stroke-linecap="round"/></g>
+        <g id="pr-tongue" style="display:none"><ellipse cx="80" cy="84" rx="6.5" ry="8" fill="#E05870"/><line x1="80" y1="79" x2="80" y2="90" stroke="#C03858" stroke-width="1.5"/></g>
+        <g id="pr-sleep-eyes" style="display:none">
+          <path d="M61 65 Q67.5 60 74 65" stroke="#2E1A0E" stroke-width="2.5" fill="none" stroke-linecap="round"/>
+          <path d="M86 65 Q92.5 60 99 65" stroke="#2E1A0E" stroke-width="2.5" fill="none" stroke-linecap="round"/>
+        </g>
+        <rect x="61" y="90" width="38" height="9" rx="4.5" fill="#9060c0"/>
+        <ellipse cx="80" cy="104" rx="13" ry="8" fill="#F5C842"/>
+        <ellipse cx="80" cy="104" rx="11" ry="6.5" fill="#F8D84A"/>
+        <text style="font-size:9px;font-weight:800;fill:#5a2870;font-family:inherit;" x="80" y="107" text-anchor="middle">Maple</text>
+        <circle cx="80" cy="99" r="2.5" fill="#7040a0"/>
+      </svg>
+      <div style="font-size:8px;font-weight:700;color:#7a3890;margin-top:2px;white-space:nowrap;">🍼 still a baby — no walks yet</div>
+    </div>
+    <!-- Your puppy wrap — main sprite moves here on enter -->
+    <div id="pr-your-puppy-wrap" style="position:absolute;bottom:22%;left:26%;transform:translateX(-50%);text-align:center;z-index:5;display:none;">
+      <div id="pr-your-bubble" style="background:#fff;border-radius:14px;padding:5px 11px;font-size:var(--fs-sm);font-weight:700;color:#3a2410;box-shadow:0 3px 12px rgba(0,0,0,0.15);opacity:0;transition:opacity 0.4s;pointer-events:none;max-width:180px;margin-bottom:3px;white-space:nowrap;position:relative;left:50%;transform:translateX(-50%);">…</div>
+      <!-- puppy sprite injected here by JS, scaled up in bringPuppyIn() so
+           it reads larger than Maple — this pup is already walk-out age. -->
+      <div id="pr-your-name" style="font-size:var(--fs-2xs);font-weight:800;color:#3a2410;letter-spacing:0.5px;margin-top:2px;"></div>
+      <div style="font-size:8px;font-weight:700;color:#8a5a20;margin-top:1px;white-space:nowrap;">🎒 walk-ready</div>
+    </div>
+  </div>
+  <!-- Bottom panel -->
+  <div style="flex:1;overflow-y:auto;padding:10px 14px calc(var(--sab,0px) + 16px);">
+    <!-- Status line -->
+    <div id="pr-status-row" style="background:rgba(255,255,255,0.35);border-radius:14px;padding:9px 13px;margin-bottom:9px;font-size:var(--fs-sm);font-weight:700;color:#5a2870;">
+      <span id="pr-status-text">Opening the door…</span>
+    </div>
+    <!-- Interaction buttons — hidden until puppy is inside -->
+    <div id="pr-btn-row" style="display:flex;gap:8px;margin-bottom:9px;flex-wrap:wrap;opacity:0;transition:opacity 0.5s;">
+      <button id="pr-btn-sniff"  class="btn-primary-green" style="flex:1;min-width:72px;padding:9px 4px;font-size:var(--fs-sm);">👃 Sniff</button>
+      <button id="pr-btn-bow"    class="btn-primary-green" style="flex:1;min-width:72px;padding:9px 4px;font-size:var(--fs-sm);">🙇 Play bow</button>
+      <button id="pr-btn-play"   class="btn-primary-green" style="flex:1;min-width:72px;padding:9px 4px;font-size:var(--fs-sm);">🎾 Play</button>
+      <button id="pr-btn-watch"  class="btn-primary-green" style="flex:1;min-width:72px;padding:9px 4px;font-size:var(--fs-sm);">🛡️ Watch over</button>
+      <button id="pr-btn-nap"    class="btn-primary-green" style="flex:1;min-width:72px;padding:9px 4px;font-size:var(--fs-sm);">😴 Nap together</button>
+    </div>
+    <!-- Did you know -->
+    <div style="background:rgba(255,255,255,0.22);border-radius:13px;padding:9px 12px;">
+      <div style="font-size:var(--fs-2xs);font-weight:800;color:#7a3890;letter-spacing:0.5px;margin-bottom:3px;">🐾 DID YOU KNOW</div>
+      <div id="pr-dyk" style="font-size:var(--fs-xs);color:#5a2870;line-height:1.55;"></div>
+    </div>
+  </div>
+</div>
+
+<!-- Name prompt modal — shown once if no name saved -->
+<div id="pr-name-modal" style="display:none;position:fixed;inset:0;z-index:400;background:rgba(0,0,0,0.55);backdrop-filter:blur(6px);align-items:center;justify-content:center;padding:28px;">
+  <div style="background:var(--card);border-radius:24px;padding:24px 20px;width:100%;max-width:320px;text-align:center;box-shadow:0 8px 40px rgba(0,0,0,0.22);">
+    <div style="font-size:40px;margin-bottom:8px;">🐾</div>
+    <div style="font-size:var(--fs-lg);font-weight:800;color:var(--txt);margin-bottom:4px;">What's your puppy's name?</div>
+    <div style="font-size:var(--fs-sm);color:var(--txt-m);margin-bottom:16px;">Maple wants to know who's visiting!</div>
+    <input id="pr-name-input" type="text" maxlength="18" placeholder="e.g. Mochi, Biscuit, Leo…"
+      style="width:100%;border-radius:14px;border:2px solid rgba(0,0,0,0.12);padding:11px 14px;font-size:var(--fs-base);font-family:inherit;color:var(--txt);background:var(--bg);outline:none;box-sizing:border-box;margin-bottom:12px;text-align:center;"/>
+    <button id="pr-name-save" class="btn-primary-green" style="width:100%;margin-bottom:8px;">Let's go! 🐾</button>
+    <button id="pr-name-skip" style="width:100%;background:none;border:none;color:var(--txt-m);font-size:var(--fs-sm);font-weight:600;cursor:pointer;padding:6px;">Skip (use "Puppy")</button>
   </div>
 </div>
 
@@ -3179,6 +3378,12 @@ body.night-mode #talk-screen-card::after{background:var(--night);}
     <p style="margin-bottom:10px;">A patch of grass just outside the house — puppy can chase the ball or sniff around here without a full walk.</p>
     <button onclick="backyardInteract()" class="house-btn" style="width:100%;background:var(--accent);color:#fff;border:none;">🎾 Throw the ball</button>
   </div>
+</div>
+
+<!-- PUPPY'S FRIEND ROOM — shows top Dog Friend, reacts to current walk energy -->
+<div id="friendroom-overlay">
+  <div class="panel-header"><h2>🐕 Puppy's Friend</h2><button class="close-btn home-btn" onclick="goHome()" title="Back to main screen">🐾</button><button class="close-btn" id="close-friendroom-overlay">✕</button></div>
+  <div id="friendroom-body" style="flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:28px;overflow-y:auto;"></div>
 </div>
 
 <!-- MEET — conversation modal -->
@@ -3388,6 +3593,35 @@ body.night-mode #talk-screen-card::after{background:var(--night);}
   </div>
 </div>
 
+<!-- Mood Log — a daily emoji + note journal, opt-in, on-device only (localStorage
+     'pw_mood_log'). Idea ported from a sibling app's post-walk "how was the
+     walk?" popup — reworked as an anytime diary since this app has no
+     discrete walk-start/walk-end event to hook a post-walk moment onto (steps
+     accumulate continuously from Apple Health, not from a GPS session). One
+     entry per calendar day; opening on a day that already has an entry shows
+     it pre-filled for editing rather than starting fresh. -->
+<div id="mood-log-modal" style="display:none;position:fixed;inset:0;z-index:300;background:rgba(0,0,0,0.55);backdrop-filter:blur(6px);align-items:center;justify-content:center;padding:24px;">
+  <div style="position:relative;background:var(--card);border-radius:24px;padding:22px;width:100%;max-width:340px;max-height:85vh;overflow-y:auto;box-shadow:0 1px 2px rgba(0,0,0,0.06),0 12px 32px rgba(0,0,0,0.16),0 28px 64px rgba(0,0,0,0.12),inset 0 1px 0 var(--rim-light);">
+    <button class="close-btn" id="mood-log-close-btn" title="Close" aria-label="Close" style="position:absolute;top:10px;right:10px;">✕</button>
+    <div style="text-align:center;font-size:36px;margin-bottom:6px;">🐾</div>
+    <div style="text-align:center;font-size:var(--fs-lg);font-weight:800;color:var(--txt);margin-bottom:4px;">Mood Log</div>
+    <div style="text-align:center;font-size:var(--fs-sm);color:var(--txt-m);margin-bottom:14px;">How's today going? A quick, optional note — on this device only.</div>
+    <div class="section-label" style="text-align:center;">Today</div>
+    <div id="mood-log-emojis" style="display:flex;justify-content:center;gap:8px;flex-wrap:wrap;margin-bottom:10px;">
+      <button class="mood-log-emoji-btn" data-mood="😊" title="Great" style="font-size:24px;background:var(--card);border:2px solid rgba(0,0,0,0.08);border-radius:12px;width:42px;height:42px;cursor:pointer;">😊</button>
+      <button class="mood-log-emoji-btn" data-mood="🌸" title="Lovely" style="font-size:24px;background:var(--card);border:2px solid rgba(0,0,0,0.08);border-radius:12px;width:42px;height:42px;cursor:pointer;">🌸</button>
+      <button class="mood-log-emoji-btn" data-mood="😴" title="Tired" style="font-size:24px;background:var(--card);border:2px solid rgba(0,0,0,0.08);border-radius:12px;width:42px;height:42px;cursor:pointer;">😴</button>
+      <button class="mood-log-emoji-btn" data-mood="🌧️" title="Rainy" style="font-size:24px;background:var(--card);border:2px solid rgba(0,0,0,0.08);border-radius:12px;width:42px;height:42px;cursor:pointer;">🌧️</button>
+      <button class="mood-log-emoji-btn" data-mood="🔥" title="Energetic" style="font-size:24px;background:var(--card);border:2px solid rgba(0,0,0,0.08);border-radius:12px;width:42px;height:42px;cursor:pointer;">🔥</button>
+      <button class="mood-log-emoji-btn" data-mood="😌" title="Peaceful" style="font-size:24px;background:var(--card);border:2px solid rgba(0,0,0,0.08);border-radius:12px;width:42px;height:42px;cursor:pointer;">😌</button>
+    </div>
+    <textarea id="mood-log-note" placeholder="Add a note... (optional)" rows="2" maxlength="120" style="width:100%;border-radius:14px;border:1.5px solid rgba(0,0,0,0.12);padding:10px 12px;font-size:var(--fs-base);font-family:inherit;color:var(--txt);background:var(--card);resize:none;outline:none;box-sizing:border-box;margin-bottom:10px;"></textarea>
+    <button id="mood-log-save-btn" class="btn-primary-green" style="width:100%;margin-bottom:14px;">Save today's mood ✅</button>
+    <div class="section-label" style="text-align:center;">Past entries</div>
+    <div id="mood-log-list" style="background:rgba(0,0,0,0.04);border-radius:14px;padding:10px 12px;font-size:var(--fs-sm);color:var(--txt-m);line-height:1.7;max-height:180px;overflow-y:auto;"></div>
+  </div>
+</div>
+
 <!-- APP LOOK — picker of full palette+font swaps. All free, none gated. -->
 <div id="theme-picker-modal" style="display:none;position:fixed;inset:0;z-index:300;background:rgba(0,0,0,0.55);backdrop-filter:blur(6px);align-items:center;justify-content:center;padding:24px;">
   <div style="position:relative;background:var(--card);border-radius:24px;padding:22px;width:100%;max-width:340px;box-shadow:0 1px 2px rgba(0,0,0,0.06),0 12px 32px rgba(0,0,0,0.16),0 28px 64px rgba(0,0,0,0.12),inset 0 1px 0 var(--rim-light);">
@@ -3427,6 +3661,142 @@ body.night-mode #talk-screen-card::after{background:var(--night);}
 </div>
 
 <script>
+
+// 🎒🪭 Accessories quick-menu + Hand fan (outdoor & indoor) — FIX (Sep 2
+// 2026): this block used to live inline at this spot, ~10,700 lines into a
+// single <script> tag. If ANY unrelated statement earlier in that huge
+// script threw an uncaught error, JS execution stops permanently at that
+// point and every line after it — including all the fan click bindings —
+// silently never runs. Nothing here looked broken in isolation; it just
+// never got the chance to register. That's consistent with taps doing
+// nothing with no visible symptom, and with the fan re-breaking across
+// versions despite fixes that only touched the fan's own logic.
+// Fix: this whole block now (1) runs inside DOMContentLoaded, so it's
+// scheduled as an independent callback rather than depending on reaching
+// this exact line during the main synchronous run; (2) wraps itself in
+// try/catch so a failure here can't cascade into anything after it either;
+// (3) looks up its own DOM elements and reads shared state defensively
+// (via safeGet) instead of trusting outer-scope variables that might not
+// have finished initializing; and (4) exposes toggleHouseFan/waveUchiwa on
+// window since they're still called via inline onclick="" in the HTML.
+window.addEventListener('DOMContentLoaded',function(){
+  try{
+    function safeGet(fn,fallback){ try{ const v=fn(); return v===undefined?fallback:v; }catch(e){ return fallback; } }
+    function safeCall(fn){ try{ fn(); }catch(e){ console.error('[PawTrail accessories/fan]',e); } }
+
+    // Sunglasses/Raincoat/Hand-fan chips — same on/off state Settings tracks.
+    const accessoriesBtn=document.getElementById('accessories-btn');
+    const accessoriesMenu=document.getElementById('accessories-menu');
+    if(accessoriesBtn&&accessoriesMenu){
+      function fanIsHot(){
+        return safeGet(()=>getSeason()==='summer',false)||safeGet(()=>weatherMood==='hot',false);
+      }
+      function syncAccessoryChips(){
+        // exposed on window below toggleSunglasses()/toggleRaincoat() (defined
+        // elsewhere in this file) call this by name to refresh the chip UI
+        const sgChip=document.getElementById('acc-chip-sunglasses');
+        const sgState=document.getElementById('acc-state-sunglasses');
+        const sgOn=safeGet(()=>sunglassesOn,false);
+        if(sgChip&&sgState){ sgChip.classList.toggle('selected',sgOn); sgState.textContent=sgOn?'On':'Off'; }
+        const rcChip=document.getElementById('acc-chip-raincoat');
+        const rcState=document.getElementById('acc-state-raincoat');
+        const rcOn=safeGet(()=>raincoatOn,false);
+        if(rcChip&&rcState){ rcChip.classList.toggle('selected',rcOn); rcState.textContent=rcOn?'On':'Off'; }
+        const fanChip=document.getElementById('acc-chip-fan');
+        const fanState=document.getElementById('acc-state-fan');
+        if(fanChip&&fanState){ fanChip.classList.remove('disabled'); fanState.textContent='Tap to use'; }
+        accessoriesBtn.classList.toggle('has-active',sgOn||rcOn);
+      }
+      window.syncAccessoryChips=syncAccessoryChips;
+      accessoriesBtn.addEventListener('click',e=>{
+        e.stopPropagation();
+        syncAccessoryChips(); // weather may have changed since last open
+        accessoriesMenu.classList.toggle('open');
+      });
+      document.addEventListener('click',()=>accessoriesMenu.classList.remove('open'));
+      accessoriesMenu.addEventListener('click',e=>e.stopPropagation());
+      const sgChipBtn=document.getElementById('acc-chip-sunglasses');
+      if(sgChipBtn)sgChipBtn.addEventListener('click',()=>safeCall(()=>toggleSunglasses()));
+      const rcChipBtn=document.getElementById('acc-chip-raincoat');
+      if(rcChipBtn)rcChipBtn.addEventListener('click',()=>safeCall(()=>toggleRaincoat()));
+
+      let outdoorFanWaveTimer=null,outdoorFanBannerTimer=null;
+      function usePortableFan(){
+        const icon=document.getElementById('acc-fan-icon');
+        if(icon){
+          icon.classList.remove('waving');
+          void icon.offsetWidth;
+          icon.classList.add('waving');
+          clearTimeout(outdoorFanWaveTimer);
+          outdoorFanWaveTimer=setTimeout(()=>icon.classList.remove('waving'),1000);
+        }
+        const msg=fanIsHot()?'🪭 Ahh, nice and cool!':'🪭 A little breeze for you!';
+        if(!safeGet(()=>{showBanner(msg);return true;},false)){
+          const banner=document.getElementById('mood-banner');
+          if(banner){
+            banner.textContent=msg; banner.classList.add('visible');
+            clearTimeout(outdoorFanBannerTimer);
+            outdoorFanBannerTimer=setTimeout(()=>banner.classList.remove('visible'),2800);
+          }
+        }
+        safeCall(()=>{
+          if(!isCyclingActive&&currentPuppyState!=='sleepy'){
+            const prevState=currentPuppyState;
+            setPuppyState('happy');
+            setTimeout(()=>{ if(currentPuppyState==='happy') setPuppyState(prevState); },1800);
+          }
+        });
+        safeCall(()=>spawnHeart());
+      }
+      const fanChipBtn=document.getElementById('acc-chip-fan');
+      if(fanChipBtn)fanChipBtn.addEventListener('click',usePortableFan);
+      syncAccessoryChips();
+    }
+
+    // 🌀❄️ Fan/Cooler — Puppy's Room only, manual toggle, never weather-triggered
+    // on purpose. Controls the wall-AC + floor-fan artwork down in the room
+    // scene; curtains sway along with it so the breeze reads as one thing
+    // actually moving air through the room.
+    let houseFanOn=localStorage.getItem('pw_house_fan')==='1';
+    function updateHouseFanVisual(){
+      const ac=document.getElementById('puppyroom-ac');
+      const fan=document.getElementById('puppyroom-fan');
+      const fanBlades=document.getElementById('puppyroom-fan-blades');
+      if(ac)ac.style.display=houseFanOn?'':'none';
+      if(fan)fan.style.display=houseFanOn?'':'none';
+      if(fanBlades)fanBlades.classList.toggle('spin',houseFanOn);
+      document.getElementById('puppyroom-curtain-l')?.classList.toggle('sway',houseFanOn);
+      document.getElementById('puppyroom-curtain-r')?.classList.toggle('sway',houseFanOn);
+    }
+    window.toggleHouseFan=function(){
+      houseFanOn=!houseFanOn;
+      localStorage.setItem('pw_house_fan',houseFanOn?'1':'0');
+      updateHouseFanVisual();
+      safeCall(()=>showBanner(houseFanOn?'🌀 Fan on — nice and cool!':'Fan off 🐶'));
+    };
+    updateHouseFanVisual();
+
+    // Each tap = one real fanning motion (the icon waves twice, ~1s total),
+    // same as an owner actually waving it — nothing happens on its own
+    // between taps. Reuses the shared reaction/mood system so the puppy's
+    // response is consistent with every other hands-on interaction.
+    let uchiwaWaveTimer=null;
+    window.waveUchiwa=function(){
+      const icon=document.getElementById('uchiwa-icon');
+      if(icon){
+        icon.classList.remove('waving');
+        void icon.offsetWidth; // restart the animation if tapped again mid-wave
+        icon.classList.add('waving');
+        clearTimeout(uchiwaWaveTimer);
+        uchiwaWaveTimer=setTimeout(()=>icon.classList.remove('waving'),1000);
+      }
+      safeCall(()=>houseInteract('uchiwa'));
+    };
+  }catch(err){
+    console.error('[PawTrail] Accessories/Hand-fan block failed to initialize:',err);
+  }
+});
+
 // ═══ DATA ═══
 const PUPPY_MILESTONES=[
   {steps:100,emoji:'🦴',title:'First Bone!',desc:'Your puppy found a hidden bone buried under the old oak tree. What a nose!'},
@@ -3659,7 +4029,7 @@ const MYTH_WAYPOINTS=[
 const EARTH_ROUTES={
   silk:{key:'silk',label:'Silk Road',waypoints:EARTH_WAYPOINTS,mapTitle:'— THE OLD TRADE ROAD —',doneText:'Silk Road complete!',deco:'ship',paper:'#e8d4a8'},
   sea:{key:'sea',label:'Spice Route',waypoints:SEA_WAYPOINTS,mapTitle:'— THE SPICE ROUTE —',doneText:'Spice Route complete!',deco:'ship2',paper:'#d8c9a0'},
-  myth:{key:'myth',label:'Myths & Legends',waypoints:MYTH_WAYPOINTS,mapTitle:'— THE LEGEND TRAIL —',doneText:'Every legend found!',deco:'sparkle',paper:'#d8cce0'},
+  myth:{key:'myth',label:'The Legend Trail',waypoints:MYTH_WAYPOINTS,mapTitle:'— THE LEGEND TRAIL —',doneText:'Every legend found!',deco:'sparkle',paper:'#d8cce0'},
 };
 let currentEarthRouteKey=localStorage.getItem('pw_earth_route')||'silk';
 function getEarthRoute(){return EARTH_ROUTES[currentEarthRouteKey]||EARTH_ROUTES.silk;}
@@ -3669,8 +4039,29 @@ function getEarthWaypoints(){return getEarthRoute().waypoints;}
 // you've walked the whole route you've "used up" those steps. Starting a new
 // lap doesn't erase any walking — it just offsets the route's own zero point
 // to right now, so the same trail can be walked again (and again).
-let earthLapOffsets=JSON.parse(localStorage.getItem('pw_earth_lap_offsets')||'{}');
-let earthLapCounts=JSON.parse(localStorage.getItem('pw_earth_lap_counts')||'{}');
+// Safe JSON load from localStorage — every pw_* JSON value in this file used
+// to be loaded with a bare JSON.parse(localStorage.getItem(key)||fallback),
+// no try/catch. If ANY one of those values ever got corrupted (a partial
+// write, an old/incompatible schema, a hand-edited Save/Restore import), that
+// JSON.parse throws a plain SyntaxError — and since this whole app is one
+// script block, that single throw silently kills every statement after it,
+// including button wiring for things with no relation at all to whichever
+// key was actually bad (e.g. Hemisphere buttons, the Real weather toggle —
+// both live later in the script than most of these). Centralizing every one
+// of these behind a try/catch means a single corrupted key degrades to just
+// that one feature resetting to its default, instead of breaking the rest of
+// the app silently.
+function pwLoadJSON(key,fallbackJSON){
+  try{
+    const raw=localStorage.getItem(key);
+    if(raw===null||raw===undefined) return JSON.parse(fallbackJSON);
+    return JSON.parse(raw);
+  }catch(e){
+    return JSON.parse(fallbackJSON);
+  }
+}
+let earthLapOffsets=pwLoadJSON('pw_earth_lap_offsets','{}');
+let earthLapCounts=pwLoadJSON('pw_earth_lap_counts','{}');
 function getEarthEffectiveSteps(){
   return Math.max(0,steps-(earthLapOffsets[currentEarthRouteKey]||0));
 }
@@ -3892,7 +4283,7 @@ function fillMarsStatus(el){
   const m=getMarsTime();
   el.textContent=`Sol ${m.sol.toLocaleString()} · real "Mars time" JPL uses for the rovers · no humans yet — robots only`;
 }
-let friendClocks=JSON.parse(localStorage.getItem('pw_friends')||'[]'); // [{cityId,name,avatar}]
+let friendClocks=pwLoadJSON('pw_friends','[]'); // [{cityId,name,avatar}]
 function saveFriends(){ localStorage.setItem('pw_friends',JSON.stringify(friendClocks)); }
 function populateFriendCityPicker(){
   const sel=document.getElementById('friend-city-picker');
@@ -3994,7 +4385,7 @@ function cycleFriendAvatar(idx){
 
 // ── MY HOME — a pinned city (not a friend), with a lock so it doesn't get
 // changed by accident. ──
-let homeCity=JSON.parse(localStorage.getItem('pw_home_city')||'null'); // {cityId,name,lat,lon,tz}
+let homeCity=pwLoadJSON('pw_home_city','null'); // {cityId,name,lat,lon,tz}
 let homeLocked=localStorage.getItem('pw_home_locked')==='1';
 function saveHomeCity(){ localStorage.setItem('pw_home_city',JSON.stringify(homeCity)); localStorage.setItem('pw_home_locked',homeLocked?'1':'0'); }
 function setAsHome(){
@@ -4155,6 +4546,8 @@ document.getElementById('smenu-friends').addEventListener('click',()=>{
   openFriendsModal();
 });
 document.getElementById('friend-clock-btn').addEventListener('click',openFriendsModal);
+document.getElementById('dog-friends-btn').addEventListener('click',openDogFriendsScreen);
+document.getElementById('mood-log-btn').addEventListener('click',openMoodLogModal);
 document.getElementById('friends-close-btn').addEventListener('click',()=>{document.getElementById('friends-modal').style.display='none';});
 document.getElementById('friend-add-btn').addEventListener('click',addFriendClock);
 
@@ -4229,15 +4622,24 @@ let steps=parseInt(localStorage.getItem('pw_steps')||'0');
 let cyclingKm=parseFloat(localStorage.getItem('pw_cycling')||'0');
 let isCycling=false;
 let streak=parseInt(localStorage.getItem('pw_streak')||'0');
-let unlockedPuppy=JSON.parse(localStorage.getItem('pw_unlocked')||'[]');
+let unlockedPuppy=pwLoadJSON('pw_unlocked','[]');
 let lastSpaceWpIdx=parseInt(localStorage.getItem('pw_sp_wp')||'0');
 let lastEarthWpIdx=parseInt(localStorage.getItem('pw_e_wp')||'0');
+// Tracks the last waypoint index the arrival reaction bubble already fired
+// for, seeded on each (re)build so opening/switching a route never fires a
+// false "just arrived" bubble for progress made earlier — see
+// triggerReactionBubble() and its call inside updateParchmentMap().
+let earthArrivalReactedIdx=-1;
 // World Flights is a free from/to picker (not a fixed sequence), so progress
 // is tracked per chosen route rather than as an index into a waypoint list.
 let flightRouteFrom=localStorage.getItem('pw_f_from')||'london';
 let flightRouteTo=localStorage.getItem('pw_f_to')||'newyork';
 let flightRouteStartSteps=localStorage.getItem('pw_f_start')!==null?parseInt(localStorage.getItem('pw_f_start')):steps;
 let flightRouteAcked=localStorage.getItem('pw_f_acked')!=='0';
+// Mirrors earthArrivalReactedIdx's job but for the single-destination Modern
+// Earth route: true once the arrival reaction bubble has fired for the
+// *current* From→To pair, reset whenever a new pair is picked.
+let flightArrivalReacted=null;
 let stepsInSession=0,currentPuppyState='idle',lastPeak=0,accelHistory=[];
 let isCyclingActive=false; // true only between "Start cycling" and "Stop cycling"
 let idleTimer=null,motionMode=false,manualMode=false,heartCooldown=false,activePanel=null;
@@ -4484,8 +4886,8 @@ const PLANT_TYPES=[
 ];
 const GARDEN_STAGE_DAYS={seed:0,sprout:1.5,growing:3.5,ready:6};
 const GARDEN_STAGE_EMOJI={seed:'🌰',sprout:'🌱',growing:'🌿'}; // 'ready' uses the plant's own emoji
-let gardenPlots=JSON.parse(localStorage.getItem('pw_garden')||'null')||[null,null]; // [{plantId,plantedDate}|null, ...]
-let gardenHarvest=JSON.parse(localStorage.getItem('pw_garden_harvest')||'{}'); // {tomato:2, carrot:1, ...}
+let gardenPlots=pwLoadJSON('pw_garden','null')||[null,null]; // [{plantId,plantedDate}|null, ...]
+let gardenHarvest=pwLoadJSON('pw_garden_harvest','{}'); // {tomato:2, carrot:1, ...}
 function saveGarden(){ localStorage.setItem('pw_garden',JSON.stringify(gardenPlots)); }
 function saveGardenHarvest(){ localStorage.setItem('pw_garden_harvest',JSON.stringify(gardenHarvest)); }
 function getPlantStage(plot){
@@ -4741,6 +5143,7 @@ function setWeatherMood(mood){
   if(weatherMood!==mood) weatherTapCount[mood]=0;
   weatherTapCount[mood]=(weatherTapCount[mood]||0)+1;
   weatherMood=mood;localStorage.setItem('pw_weather_mood',mood);
+  if(prevMood!==mood) setTalkNews(true);
   document.querySelectorAll('.wmood-btn[data-mood]').forEach(b=>b.classList.toggle('selected',b.dataset.mood===mood));
   const reactions=WEATHER_REACTIONS[mood];
   const idx=Math.min(weatherTapCount[mood]-1,reactions.length-1);
@@ -4915,7 +5318,24 @@ function refreshLocationStatus(){
 }
 async function enableLocation(silent){
   if(!navigator.geolocation){ if(!silent) showBanner('Location not available on this device'); return; }
+  // Own fallback timer, separate from the {timeout:8000} option passed below.
+  // That option only fires if the browser's geolocation implementation calls
+  // back at all — but some sandboxed/embedded contexts (previews, WebViews
+  // without geolocation permission granted) silently never call EITHER
+  // callback, so the built-in timeout never triggers either. Without this,
+  // tapping "Turn on" did nothing visible at all — no banner, no status
+  // change, stuck forever. This guarantees a visible result either way.
+  let settled=false;
+  const fallbackTimer=setTimeout(()=>{
+    if(settled)return;
+    settled=true;
+    GEO.granted=false;
+    localStorage.setItem('pw_location_enabled','0');
+    if(!silent) showBanner("📍 Couldn't get your location here — try opening this in your regular browser, or use the weather picker below instead");
+    refreshLocationStatus();
+  },9000);
   navigator.geolocation.getCurrentPosition(async pos=>{
+    if(settled)return; settled=true; clearTimeout(fallbackTimer);
     GEO.lat=pos.coords.latitude;GEO.lon=pos.coords.longitude;GEO.granted=true;
     localStorage.setItem('pw_location_enabled','1'); // only a yes/no flag — never the coordinates themselves
     realSunToday=getSunTimesLocal(GEO.lat,GEO.lon); // instant, offline-friendly estimate
@@ -4928,6 +5348,7 @@ async function enableLocation(silent){
       updateTimeOfDay();refreshLocationStatus();
     }catch(e){}
   },err=>{
+    if(settled)return; settled=true; clearTimeout(fallbackTimer);
     GEO.granted=false;
     localStorage.setItem('pw_location_enabled','0');
     if(!silent) showBanner('Location denied — using fixed 8pm–6am day/night');
@@ -5244,8 +5665,8 @@ let spaceFarthestIdxEver=parseInt(localStorage.getItem('pw_space_farthest_idx')|
 // Guards against re-logging the same probe every render while it sits in its
 // finished 'silent' state — reset to false only when a new probe launches.
 let spaceProbeLogged=localStorage.getItem('pw_space_probe_logged')==='true';
-let spaceBadgesEarned=JSON.parse(localStorage.getItem('pw_space_badges_earned')||'{}'); // {badgeId: ISO date first earned}
-let spaceProbeLog=JSON.parse(localStorage.getItem('pw_space_probe_log')||'[]'); // newest first, capped at 20
+let spaceBadgesEarned=pwLoadJSON('pw_space_badges_earned','{}'); // {badgeId: ISO date first earned}
+let spaceProbeLog=pwLoadJSON('pw_space_probe_log','[]'); // newest first, capped at 20
 function awardSpaceBadge(id){
   if(spaceBadgesEarned[id]) return;
   spaceBadgesEarned[id]=new Date().toISOString();
@@ -5674,6 +6095,7 @@ function buildEarthRoute(){
   earthMapBuilt=true;
   buildTrailStrip();
   earthViewIdx=getCurrentEarthWpIdx();
+  earthArrivalReactedIdx=earthViewIdx;
   drawLandmark(earthViewIdx);
   buildParchmentMap();
 }
@@ -5946,9 +6368,56 @@ function buildParchmentMap(){
   updateParchmentMap();
 }
 
+// ═══ ARRIVAL REACTION BUBBLES ═══
+// Small speech-bubble popup on the map itself when the puppy newly reaches a
+// stop — makes arrival feel like an event the puppy notices, not just a
+// number crossing a threshold. Deliberately built as its own persistent SVG
+// group (not inside the marker group that gets wiped+redrawn every progress
+// tick) so a rapid run of updates during the same visit doesn't cut the
+// bubble's fade-out short. One shared helper reused by both Ancient Worlds
+// and Modern Earth; Space Explorer intentionally has no equivalent (see the
+// map-puppy-bounce comment above — that panel is an uncrewed probe, nothing
+// aboard to react).
+const reactionBubbleTimers={};
+function triggerReactionBubble(groupId,x,y,text){
+  const g=document.getElementById(groupId);
+  if(!g)return;
+  const svgNS='http://www.w3.org/2000/svg';
+  g.innerHTML='';
+  const lines=wrapSvgText(text,26);
+  const bubbleW=Math.max(120,...lines.map(l=>l.length*6.3+20));
+  const bubbleH=14+lines.length*14;
+  const bx=Math.max(bubbleW/2+4,x);
+  const by=y-bubbleH;
+  const rect=document.createElementNS(svgNS,'rect');
+  rect.setAttribute('x',(bx-bubbleW/2).toFixed(1));rect.setAttribute('y',by.toFixed(1));
+  rect.setAttribute('width',bubbleW.toFixed(1));rect.setAttribute('height',bubbleH.toFixed(1));rect.setAttribute('rx','9');
+  rect.setAttribute('fill','#fff8e8');rect.setAttribute('stroke','#a06a1e');rect.setAttribute('stroke-width','1.5');
+  g.appendChild(rect);
+  lines.forEach((line,i)=>{
+    const t=document.createElementNS(svgNS,'text');
+    t.setAttribute('x',bx.toFixed(1));t.setAttribute('y',(by+16+i*14).toFixed(1));
+    t.setAttribute('text-anchor','middle');t.setAttribute('font-size','11.5');t.setAttribute('font-weight','700');
+    t.setAttribute('fill','#3a2a14');t.textContent=line;
+    g.appendChild(t);
+  });
+  const tail=document.createElementNS(svgNS,'path');
+  tail.setAttribute('d',`M${(bx-6).toFixed(1)},${(by+bubbleH).toFixed(1)} L${bx.toFixed(1)},${(by+bubbleH+8).toFixed(1)} L${(bx+6).toFixed(1)},${(by+bubbleH).toFixed(1)} Z`);
+  tail.setAttribute('fill','#fff8e8');tail.setAttribute('stroke','#a06a1e');tail.setAttribute('stroke-width','1.5');
+  g.appendChild(tail);
+  g.style.opacity='1';
+  clearTimeout(reactionBubbleTimers[groupId]);
+  reactionBubbleTimers[groupId]=setTimeout(()=>{g.style.opacity='0';},2600);
+}
+
 function updateParchmentMap(){
   const wps=getEarthWaypoints();
   const idx=getCurrentEarthWpIdx();const wp=wps[idx];const nextWp=wps[idx+1];
+
+  if(idx>earthArrivalReactedIdx){
+    earthArrivalReactedIdx=idx;
+    if(idx>0) triggerReactionBubble('parchment-arrival-bubble',wp.x,wp.y-46,`Woof! Made it to ${wp.name}! 🐾`);
+  }
 
   wps.forEach((_,i)=>{
     const dot=document.getElementById(`pdot-${i}`);
@@ -5966,6 +6435,7 @@ function updateParchmentMap(){
   const svgNS='http://www.w3.org/2000/svg';
   const craftG=document.getElementById('parchment-craft');
   craftG.innerHTML='';
+  craftG.classList.add('map-puppy-bounce');
   const markerY=py-40;
 
   const connector=document.createElementNS(svgNS,'line');
@@ -5994,7 +6464,7 @@ function updateParchmentMap(){
   const pawText=document.createElementNS(svgNS,'text');
   pawText.setAttribute('x',px.toFixed(1));pawText.setAttribute('y',(markerY+6).toFixed(1));
   pawText.setAttribute('text-anchor','middle');pawText.setAttribute('font-size','17');
-  pawText.textContent='🐾';
+  pawText.textContent='🐶';
   craftG.appendChild(pawText);
 
   const pillW=88,pillY=markerY-30;
@@ -6427,10 +6897,19 @@ function groggyReact(){
   pZzz.style.transform='scale(1.3)';
   setTimeout(()=>{pZzz.style.transform='';},400);
 }
+// Toggles the Talk button's "something new to say" dot. Fired on every real
+// puppy-state change and every weather-mood change (see setWeatherMood) —
+// both are moments where a different Talk option becomes newly relevant
+// (sleepy vs excited vs rainy-day lines) — and cleared the moment the owner
+// actually opens Talk, so it never just stays on permanently.
+function setTalkNews(on){
+  document.getElementById('talk-pup-btn')?.classList.toggle('has-news',on);
+}
 function setPuppyState(state){
   if(currentPuppyState===state)return;
   const prevState=currentPuppyState;
   currentPuppyState=state;puppy.className='state-'+state;
+  setTalkNews(true);
   // Excited little jump the instant puppy transitions into walking — real dogs
   // hop up when the leash comes out, not just settle into a steady trot.
   if(state==='walking'&&prevState!=='walking'){
@@ -7388,6 +7867,7 @@ function applyPuppyRoomSeason(season){
   const bedSummer=document.getElementById('puppyroom-bed-summer');
   if(bedClassic)bedClassic.style.display=cooling?'none':'';
   if(bedSummer)bedSummer.style.display=cooling?'':'none';
+  document.getElementById('house-menu-btn')?.classList.toggle('has-news',cooling);
 }
 
 function updateHouseMood(){
@@ -7450,6 +7930,7 @@ function closeAnyOpenRoom(){
   if(document.getElementById('puppy-house').classList.contains('open'))exitPuppyHouse();
   if(document.getElementById('backyard-overlay').classList.contains('open'))exitBackyard();
   if(document.getElementById('playroom-overlay').classList.contains('open'))closePlayroom();
+  if(document.getElementById('friendroom-overlay').classList.contains('open'))closeFriendRoom();
 }
 // The 🐾 paw button on every screen — one tap back to the plain main
 // screen, no matter how many rooms/eras/panels deep the person is.
@@ -7461,15 +7942,321 @@ function goHome(){
   document.getElementById('export-screen').classList.add('hidden');
   if(typeof settingsMenu!=='undefined')settingsMenu.classList.remove('open');
 }
-// PLAYROOM — 5th room, placeholder/stub only (🚧 under construction).
-function openPlayroom(){
+// ═══ PLAYROOM — Maple's Room ═══
+// Your main puppy sprite walks in through the door and meets Maple
+// (real SVG dog). Dog-to-dog interactions: sniff, play, nap together.
+// Name prompt fires once; saved to pw_puppy_name.
+(function(){
+  const PR_DYK=[
+    'Dogs who live together quickly learn each other\'s routines — they even nap in sync! 🐾',
+    'Dogs recognise each other by smell alone — even after months apart. 🐽',
+    'When dogs play together, they take turns being the "chaser" regardless of size — that\'s fairness! 🐕',
+    'Yawning is contagious between dogs AND between dogs and humans — it\'s empathy! 😮',
+    'Dogs who play together regularly live longer, healthier lives — friendship is medicine! ❤️',
+    'A dog\'s nose print is as unique as a human fingerprint. Maple knows your puppy by nose! 👃',
+    'Dogs bow to each other (front legs down, bottom up) to say "I want to play!" — it\'s a play bow. 🙇',
+    'Older, bigger dogs naturally play more gently with young puppies — it\'s called "self-handicapping," and it keeps tiny pups safe. 🛡️',
+    'Puppies aren\'t ready for real walks until their growth plates and vaccines catch up — until then, safe indoor play like Maple\'s is perfect. 🍼',
+  ];
+
+  function showMapleBubble(text,ms){
+    const b=document.getElementById('pr-bubble');
+    b.textContent=text;b.style.opacity='1';
+    clearTimeout(showMapleBubble._t);
+    showMapleBubble._t=setTimeout(()=>{b.style.opacity='0';},ms||2800);
+  }
+  function showYourBubble(text,ms){
+    const b=document.getElementById('pr-your-bubble');
+    b.textContent=text;b.style.opacity='1';
+    clearTimeout(showYourBubble._t);
+    showYourBubble._t=setTimeout(()=>{b.style.opacity='0';},ms||2800);
+  }
+  function setStatus(text){
+    const el=document.getElementById('pr-status-text');
+    if(el)el.textContent=text;
+  }
+
+  function mapleExcited(){
+    document.getElementById('pr-mouth-happy').style.display='none';
+    document.getElementById('pr-mouth-excited').style.display='block';
+    document.getElementById('pr-tongue').style.display='block';
+    document.getElementById('pr-sleep-eyes').style.display='none';
+  }
+  function mapleHappy(){
+    document.getElementById('pr-mouth-happy').style.display='block';
+    document.getElementById('pr-mouth-excited').style.display='none';
+    document.getElementById('pr-tongue').style.display='none';
+    document.getElementById('pr-sleep-eyes').style.display='none';
+  }
+  function mapleSleep(){
+    document.getElementById('pr-mouth-happy').style.display='none';
+    document.getElementById('pr-mouth-excited').style.display='none';
+    document.getElementById('pr-tongue').style.display='none';
+    document.getElementById('pr-sleep-eyes').style.display='block';
+  }
+  function mapleWag(){
+    const tail=document.getElementById('pr-tail');
+    if(!tail)return;
+    tail.classList.remove('wag');void tail.offsetWidth;tail.classList.add('wag');
+    tail.addEventListener('animationend',()=>tail.classList.remove('wag'),{once:true});
+  }
+  function animBoth(cls,ms){
+    const maple=document.getElementById('pr-maple-wrap');
+    const yours=document.getElementById('pr-your-puppy-wrap');
+    [maple,yours].forEach(el=>{
+      if(!el)return;
+      el.classList.remove(cls);void el.offsetWidth;el.classList.add(cls);
+    });
+    setTimeout(()=>{
+      if(maple)maple.classList.remove(cls);
+      if(yours)yours.classList.remove(cls);
+    },ms||600);
+  }
+
+  function getPuppyName(){return localStorage.getItem('pw_puppy_name')||'';}
+  function setPuppyName(n){localStorage.setItem('pw_puppy_name',n||'Puppy');}
+
+  let prPuppyOriginalParent=null,prPuppyOriginalNext=null;
+
+  function bringPuppyIn(cb){
+    const puppyEl=document.getElementById('puppy');
+    const zzzEl=document.getElementById('p-zzz');
+    const sparkleEl=document.getElementById('p-sparkle');
+    const yourWrap=document.getElementById('pr-your-puppy-wrap');
+    if(!puppyEl||!yourWrap)return;
+    prPuppyOriginalParent=puppyEl.parentNode;
+    prPuppyOriginalNext=puppyEl.nextSibling;
+    if(zzzEl)yourWrap.appendChild(zzzEl);
+    if(sparkleEl)yourWrap.appendChild(sparkleEl);
+    yourWrap.appendChild(puppyEl);
+    // Scaled to 0.85 (not the room's original 0.55) so the main puppy —
+    // already walk-out age — reads as visibly bigger than baby Maple
+    // (54x57px, see #pr-maple-wrap), not smaller than her.
+    puppyEl.style.transform='scale(0.85)';
+    puppyEl.style.transformOrigin='bottom center';
+    yourWrap.style.display='block';
+    yourWrap.style.left='4%';
+    yourWrap.style.opacity='0';
+    void yourWrap.offsetWidth;
+    yourWrap.style.transition='left 0.75s cubic-bezier(0.4,0,0.2,1),opacity 0.4s';
+    yourWrap.style.left='26%';
+    yourWrap.style.opacity='1';
+    setTimeout(()=>{yourWrap.style.transition='';if(cb)cb();},820);
+  }
+
+  function sendPuppyBack(){
+    const puppyEl=document.getElementById('puppy');
+    const zzzEl=document.getElementById('p-zzz');
+    const sparkleEl=document.getElementById('p-sparkle');
+    const yourWrap=document.getElementById('pr-your-puppy-wrap');
+    if(!puppyEl)return;
+    yourWrap.style.transition='left 0.55s ease,opacity 0.4s';
+    yourWrap.style.left='2%';
+    yourWrap.style.opacity='0';
+    setTimeout(()=>{
+      puppyEl.style.transform='';
+      puppyEl.style.transformOrigin='';
+      if(prPuppyOriginalParent){
+        const ref=prPuppyOriginalNext;
+        if(zzzEl)prPuppyOriginalParent.insertBefore(zzzEl,ref||null);
+        if(sparkleEl)prPuppyOriginalParent.insertBefore(sparkleEl,ref||null);
+        prPuppyOriginalParent.insertBefore(puppyEl,ref||null);
+      }
+      yourWrap.style.display='none';
+      yourWrap.style.left='26%';
+      yourWrap.style.opacity='1';
+      yourWrap.style.transition='';
+    },600);
+  }
+
+  function showNamePrompt(cb){
+    const modal=document.getElementById('pr-name-modal');
+    modal.style.display='flex';
+    const input=document.getElementById('pr-name-input');
+    input.value='';
+    setTimeout(()=>input.focus(),200);
+    function done(){
+      const name=(input.value.trim()||'Puppy');
+      setPuppyName(name);
+      modal.style.display='none';
+      cb();
+    }
+    document.getElementById('pr-name-save').onclick=done;
+    document.getElementById('pr-name-skip').onclick=()=>{setPuppyName('Puppy');modal.style.display='none';cb();};
+    input.onkeydown=e=>{if(e.key==='Enter')done();};
+  }
+
+  function enterRoom(){
+    document.getElementById('playroom-overlay').classList.add('open');
+    mapleHappy();
+    const btnRow=document.getElementById('pr-btn-row');
+    btnRow.style.opacity='0';btnRow.style.pointerEvents='none';
+    const nameEl=document.getElementById('pr-your-name');
+    if(nameEl)nameEl.textContent=getPuppyName();
+    document.getElementById('pr-dyk').textContent=PR_DYK[Math.floor(Math.random()*PR_DYK.length)];
+    setStatus('Your puppy is heading over to visit baby Maple… 🐾');
+    setTimeout(()=>{
+      mapleExcited();mapleWag();
+      showMapleBubble('*hears the door* 👀',1800);
+    },300);
+    setTimeout(()=>{
+      bringPuppyIn(()=>{
+        mapleExcited();mapleWag();
+        showMapleBubble('WOOF!! You made it!! 🐾',2800);
+        setTimeout(()=>showYourBubble('Woof woof!! 🐶',2400),450);
+        setStatus(getPuppyName()+' and Maple are together! 🐶❤️🐶');
+        btnRow.style.opacity='1';btnRow.style.pointerEvents='';
+        setTimeout(()=>mapleHappy(),2200);
+      });
+    },950);
+  }
+
+  window.openPlayroom=function(){
+    closeAnyOpenRoom();
+    if(!getPuppyName()){showNamePrompt(()=>enterRoom());}
+    else{enterRoom();}
+  };
+  window.closePlayroom=function(){
+    sendPuppyBack();
+    mapleHappy();
+    document.getElementById('playroom-overlay').classList.remove('open');
+  };
+  document.getElementById('close-playroom-overlay').addEventListener('click',window.closePlayroom);
+
+  // Interactions
+  const SNIFF_MAPLE=['*sniff sniff* You smell like outside! 🐽','*investigates thoroughly* 👃','Hmm… kibble AND adventure! 🐾','*nose twitching happily* 😊'];
+  const SNIFF_YOURS=['*big sniff* New smells!! 🐽','Woof! You smell like home! 🐾','*sniffs back enthusiastically* 🐶'];
+  const PLAY_MAPLE=['BALL BALL BALL!! 🎾🎾','*immediately forgets nap* 😄','Zoomies activate!! 🐕💨','Throw it!! THROW IT!! 🎾'];
+  const PLAY_YOURS=['*grabs ball first, careful with tiny Maple* 🎾','MINE! No— yours! No— MINE! 🎾😄','*plays gently since Maple\'s still so small* 🐶'];
+  const NAP_MAPLE=['*curls up close* 😴','Warm… cozy… perfect 💤','*yawns and closes eyes* 😌'];
+  const NAP_YOURS=['*yawns big* 😴','zzzz… 💤','*flops down carefully next to little Maple* 😌'];
+  // Play bow — the universal dog "wanna play?" invitation: front legs down,
+  // rear up. Both pups do it, even though Maple's version is a smaller,
+  // wobblier baby-puppy attempt at the same move.
+  const BOW_MAPLE=['*wobbly baby play-bow* still learning this! 🙇','*front paws down, tiny bottom wiggling* 🐾','*almost topples over* oops— still practicing! 😅'];
+  const BOW_YOURS=['*confident play bow* c\'mon, I\'ll go easy! 🙇','*bows low, waits patiently for baby Maple* 🐶','*play bows, tail sweeping* let\'s go, little one! 🐾'];
+  // Watch over — reflects the real size/age gap: the bigger, walk-ready
+  // puppy settles down close and stays still/calm, letting the smaller,
+  // not-yet-walk-ready Maple feel safe rather than roughhousing.
+  const WATCH_MAPLE=['*relaxes, feeling safe* 😊','*leans into the bigger puppy* 🥰','*stops fidgeting, settles down* 😌'];
+  const WATCH_YOURS=['*lies down calm and steady, keeping watch* 🛡️','*gentle, no zoomies — just close by* 🐶','*rests chin down, an eye on little Maple* 😌'];
+  function pick(arr){return arr[Math.floor(Math.random()*arr.length)];}
+
+  document.getElementById('pr-btn-sniff').addEventListener('click',()=>{
+    mapleExcited();mapleWag();
+    showMapleBubble(pick(SNIFF_MAPLE),2600);
+    setTimeout(()=>showYourBubble(pick(SNIFF_YOURS),2200),500);
+    animBoth('bounce',550);
+    setStatus('Sniffing each other hello 👃🐾');
+    setTimeout(()=>{mapleHappy();setStatus(getPuppyName()+' and Maple are together! 🐶❤️🐶');},3000);
+  });
+  document.getElementById('pr-btn-play').addEventListener('click',()=>{
+    mapleExcited();mapleWag();
+    showMapleBubble(pick(PLAY_MAPLE),2600);
+    setTimeout(()=>showYourBubble(pick(PLAY_YOURS),2200),400);
+    animBoth('bounce',550);
+    setStatus('Playing together!! 🎾🐕🐕');
+    setTimeout(()=>{mapleHappy();setStatus(getPuppyName()+' and Maple are together! 🐶❤️🐶');},3200);
+  });
+  document.getElementById('pr-btn-nap').addEventListener('click',()=>{
+    mapleSleep();
+    showMapleBubble(pick(NAP_MAPLE),3000);
+    setTimeout(()=>showYourBubble(pick(NAP_YOURS),2600),600);
+    animBoth('napping',700);
+    setStatus('Napping together 😴💤');
+    setTimeout(()=>{mapleHappy();setStatus(getPuppyName()+' and Maple are together! 🐶❤️🐶');},4000);
+  });
+  document.getElementById('pr-btn-bow').addEventListener('click',()=>{
+    mapleExcited();mapleWag();
+    showMapleBubble(pick(BOW_MAPLE),2600);
+    setTimeout(()=>showYourBubble(pick(BOW_YOURS),2200),450);
+    const maple=document.getElementById('pr-maple-wrap');
+    const yours=document.getElementById('pr-your-puppy-wrap');
+    [maple,yours].forEach(el=>{if(!el)return;el.classList.remove('bowing');void el.offsetWidth;el.classList.add('bowing');});
+    setTimeout(()=>{if(maple)maple.classList.remove('bowing');if(yours)yours.classList.remove('bowing');},1300);
+    setStatus('Play bows all around — game time! 🙇🐾');
+    setTimeout(()=>{mapleHappy();setStatus(getPuppyName()+' and Maple are together! 🐶❤️🐶');},3200);
+  });
+  document.getElementById('pr-btn-watch').addEventListener('click',()=>{
+    mapleHappy();
+    showMapleBubble(pick(WATCH_MAPLE),2800);
+    setTimeout(()=>showYourBubble(pick(WATCH_YOURS),2600),500);
+    const yours=document.getElementById('pr-your-puppy-wrap');
+    if(yours){yours.classList.remove('settling');void yours.offsetWidth;yours.classList.add('settling');}
+    setStatus(getPuppyName()+' keeps a gentle eye on baby Maple 🛡️😌');
+    setTimeout(()=>{
+      if(yours)yours.classList.remove('settling');
+      setStatus(getPuppyName()+' and Maple are together! 🐶❤️🐶');
+    },3600);
+  });
+})();
+
+
+// ═══ PUPPY'S FRIEND ROOM ═══
+// Shows the Dog Friend with the highest timesMet. Walk energy reflects
+// stepsInSession — same tiers the main puppy's mood emoji already uses.
+function friendRoomEnergy(){
+  const tiers=[
+    {min:0, emoji:'😴',label:'Resting together',sub:'No walk happening right now — a quiet moment together.'},
+    {min:1, emoji:'🐾',label:'Out for a stroll together',sub:'A walk is underway — both pups are on the move.'},
+    {min:30,emoji:'😊',label:'Having a great walk together!',sub:'A solid stretch of walking so far today.'},
+    {min:80,emoji:'🥳',label:'Zooming around together!',sub:'A really active walk — big energy today!'}
+  ];
+  return tiers.slice().reverse().find(t=>stepsInSession>=t.min)||tiers[0];
+}
+function renderFriendRoom(){
+  const body=document.getElementById('friendroom-body');
+  if(!body)return;
+  const entries=Object.values(dogFriends||{}).sort((a,b)=>b.timesMet-a.timesMet);
+  if(!entries.length){
+    body.innerHTML=`<div style="font-size:56px;margin-bottom:14px;">🐕💭</div>
+      <div style="font-size:var(--fs-lg);font-weight:800;color:#7a2a4a;margin-bottom:8px;">No friend yet</div>
+      <div style="font-size:var(--fs-sm);line-height:1.6;color:#8a4a62;max-width:280px;">Head to the 🌳 Backyard and meet a neighborhood dog at the fence — your closest friend will hang out here once you have one.</div>`;
+    return;
+  }
+  const f=entries[0];
+  const tier=typeof dogTier==='function'?dogTier(f.timesMet+(f.tierBonus||0)):'Friend';
+  const dog=(NEIGHBOR_DOGS||[]).find(n=>n.name===f.name);
+  const emoji=dog?dog.emoji:'🐕';
+  const en=friendRoomEnergy();
+  body.innerHTML=`<div style="font-size:64px;margin-bottom:6px;">🐶 ${emoji}</div>
+    <div style="font-size:var(--fs-lg);font-weight:800;color:#7a2a4a;margin-bottom:2px;">${f.name}</div>
+    <div style="font-size:var(--fs-xs);color:#a85a78;margin-bottom:14px;">${tier} · Met ${f.timesMet}×${f.breed?' · '+f.breed:''}</div>
+    <div style="background:rgba(255,255,255,0.55);border-radius:16px;padding:12px 16px;margin-bottom:16px;max-width:280px;">
+      <div style="font-size:28px;">${en.emoji}</div>
+      <div style="font-size:var(--fs-sm);font-weight:700;color:#7a2a4a;margin:2px 0;">${en.label}</div>
+      <div style="font-size:var(--fs-2xs);color:#a85a78;">${en.sub}</div>
+    </div>
+    <div style="display:flex;gap:10px;">
+      <button class="chip-btn" id="friendroom-play-btn">🎾 Play together</button>
+      <button class="chip-btn" id="friendroom-hi-btn">👋 Say hi</button>
+    </div>
+    <div id="friendroom-bubble" style="margin-top:14px;font-size:var(--fs-sm);color:#7a2a4a;font-weight:600;min-height:20px;opacity:0;transition:opacity 0.3s;"></div>`;
+  document.getElementById('friendroom-play-btn')?.addEventListener('click',()=>friendRoomInteract('play',f.name));
+  document.getElementById('friendroom-hi-btn')?.addEventListener('click',()=>friendRoomInteract('hi',f.name));
+}
+const FRIEND_ROOM_LINES={
+  play:['Zoomies around the yard, tails a blur! 🎾','Tug-of-war with a favorite toy — {n} is winning.','Chasing each other in circles, both grinning.'],
+  hi:['*happy sniff hello* {n} is glad to see your puppy! 🐾','Tails wagging, noses touching — old friends.','{n} does a little play-bow to say hi.']
+};
+function friendRoomInteract(type,name){
+  const lines=FRIEND_ROOM_LINES[type];
+  const text=lines[Math.floor(Math.random()*lines.length)].replace('{n}',name);
+  const bubble=document.getElementById('friendroom-bubble');
+  if(!bubble)return;
+  bubble.textContent=text;bubble.style.opacity='1';
+  clearTimeout(friendRoomInteract._t);
+  friendRoomInteract._t=setTimeout(()=>{bubble.style.opacity='0';},3200);
+}
+function openFriendRoom(){
   closeAnyOpenRoom();
-  document.getElementById('playroom-overlay').classList.add('open');
+  renderFriendRoom();
+  document.getElementById('friendroom-overlay').classList.add('open');
 }
-function closePlayroom(){
-  document.getElementById('playroom-overlay').classList.remove('open');
+function closeFriendRoom(){
+  document.getElementById('friendroom-overlay').classList.remove('open');
 }
-document.getElementById('close-playroom-overlay').addEventListener('click',closePlayroom);
+document.getElementById('close-friendroom-overlay').addEventListener('click',closeFriendRoom);
 
 // ═══ BACKYARD — simple outdoor spot, reachable from the House menu but not
 // numbered as a "room" since it's outside ═══
@@ -7526,7 +8313,7 @@ const NEIGHBOR_DOGS=[
 // are now remembered across visits (times met, tier), instead of every
 // meeting being a one-off. Strangers stay strangers on purpose (no name/tag
 // to remember them by).
-let dogFriends=JSON.parse(localStorage.getItem('pw_dog_friends')||'{}');
+let dogFriends=pwLoadJSON('pw_dog_friends','{}');
 function saveDogFriends(){ localStorage.setItem('pw_dog_friends',JSON.stringify(dogFriends)); }
 function dogTier(n){ return n>=7?'Best Friend':n>=4?'Buddy':n>=2?'Acquaintance':'New Face'; }
 function recordDogMeeting(p){
@@ -7700,6 +8487,7 @@ document.querySelectorAll('.house-menu-item').forEach(item=>{
     else if(dest==='ownerroom')openPanel('home');
     else if(dest==='backyard')enterBackyard();
     else if(dest==='playroom')openPlayroom();
+    else if(dest==='friendroom')openFriendRoom();
   });
 });
 
@@ -8284,6 +9072,7 @@ function cityById(id){return FLIGHT_CITIES.find(c=>c.id===id)||FLIGHT_CITIES[0];
 function setFlightRoute(fromId,toId){
   flightRouteFrom=fromId;flightRouteTo=toId;
   flightRouteStartSteps=steps;flightRouteAcked=true;
+  flightArrivalReacted=false;
   localStorage.setItem('pw_f_from',flightRouteFrom);
   localStorage.setItem('pw_f_to',flightRouteTo);
   localStorage.setItem('pw_f_start',flightRouteStartSteps);
@@ -8331,29 +9120,53 @@ function updateFlightPanel(){
 
   const pinsG=document.getElementById('flight-pins');
   pinsG.innerHTML='';
-  [[p0,from,'#7ec850'],[p1,to,'#ff6b35']].forEach(([p,city,color])=>{
+  // Pins enlarged (r:9→14, icon 10→16, label 11→15) + tappable hit-area.
+  // Tapping focuses the matching From/To <select> and flashes a gold ring.
+  [[p0,from,'#7ec850','flight-from-select'],[p1,to,'#ff6b35','flight-to-select']].forEach(([p,city,color,selectId])=>{
+    const tapG=document.createElementNS(svgNS,'g');
+    tapG.style.cursor='pointer';
+    tapG.addEventListener('click',()=>{
+      const sel=document.getElementById(selectId);
+      if(!sel)return;
+      sel.focus();
+      const field=sel.closest('.fp-field');
+      field?.classList.add('fp-field-flash');
+      setTimeout(()=>field?.classList.remove('fp-field-flash'),900);
+    });
+    const hitArea=document.createElementNS(svgNS,'circle');
+    hitArea.setAttribute('cx',p.x.toFixed(1));hitArea.setAttribute('cy',p.y.toFixed(1));hitArea.setAttribute('r','22');
+    hitArea.setAttribute('fill','transparent');
+    tapG.appendChild(hitArea);
     const ring=document.createElementNS(svgNS,'circle');
-    ring.setAttribute('cx',p.x.toFixed(1));ring.setAttribute('cy',p.y.toFixed(1));ring.setAttribute('r','9');
-    ring.setAttribute('fill',color);ring.setAttribute('stroke','#fff');ring.setAttribute('stroke-width','2');
-    pinsG.appendChild(ring);
+    ring.setAttribute('cx',p.x.toFixed(1));ring.setAttribute('cy',p.y.toFixed(1));ring.setAttribute('r','14');
+    ring.setAttribute('fill',color);ring.setAttribute('stroke','#fff');ring.setAttribute('stroke-width','2.5');
+    tapG.appendChild(ring);
     const ic=document.createElementNS(svgNS,'text');
-    ic.setAttribute('x',p.x.toFixed(1));ic.setAttribute('y',(p.y+4).toFixed(1));
-    ic.setAttribute('text-anchor','middle');ic.setAttribute('font-size','10');
+    ic.setAttribute('x',p.x.toFixed(1));ic.setAttribute('y',(p.y+5.5).toFixed(1));
+    ic.setAttribute('text-anchor','middle');ic.setAttribute('font-size','16');
     ic.textContent=city.icon;
-    pinsG.appendChild(ic);
+    tapG.appendChild(ic);
     const lbl=document.createElementNS(svgNS,'text');
-    lbl.setAttribute('x',p.x.toFixed(1));lbl.setAttribute('y',(p.y<MAP_H/2?p.y+24:p.y-16).toFixed(1));
-    lbl.setAttribute('text-anchor','middle');lbl.setAttribute('font-size','11');
-    lbl.setAttribute('font-weight','800');lbl.setAttribute('fill','#fff');lbl.setAttribute('stroke','#0a2540');lbl.setAttribute('stroke-width','3');lbl.setAttribute('paint-order','stroke');
+    lbl.setAttribute('x',p.x.toFixed(1));lbl.setAttribute('y',(p.y<MAP_H/2?p.y+32:p.y-20).toFixed(1));
+    lbl.setAttribute('text-anchor','middle');lbl.setAttribute('font-size','15');
+    lbl.setAttribute('font-weight','800');lbl.setAttribute('fill','#fff');lbl.setAttribute('stroke','#0a2540');lbl.setAttribute('stroke-width','3.5');lbl.setAttribute('paint-order','stroke');
     lbl.textContent=city.name.split(',')[0];
-    pinsG.appendChild(lbl);
+    tapG.appendChild(lbl);
+    pinsG.appendChild(tapG);
   });
 
   // Puppy marker travels along the same bow curve, at parameter t = progress
   const bx=(1-t)*(1-t)*p0.x+2*(1-t)*t*cx+t*t*p1.x;
   const by=(1-t)*(1-t)*p0.y+2*(1-t)*t*cy+t*t*p1.y;
+  if(flightArrivalReacted===null){
+    flightArrivalReacted=pct>=100; // first render after load: seed silently, don't fire retroactively
+  } else if(pct>=100&&!flightArrivalReacted){
+    flightArrivalReacted=true;
+    triggerReactionBubble('flight-arrival-bubble',bx,by-16,`Woof! We made it to ${to.name}! 🐾`);
+  }
   const craftG=document.getElementById('flight-craft');
   craftG.innerHTML='';
+  craftG.classList.add('map-puppy-bounce');
   const backing=document.createElementNS(svgNS,'circle');
   backing.setAttribute('cx',bx.toFixed(1));backing.setAttribute('cy',by.toFixed(1));backing.setAttribute('r','11');
   backing.setAttribute('fill','#0a2540');backing.setAttribute('stroke','#ffd76a');backing.setAttribute('stroke-width','1.5');
@@ -8698,7 +9511,7 @@ function updateLivingPanel(){
 }
 
 // ═══ REAL HISTORY — encounter list + conversation modal (era-card + global #meet-card overlay) ═══
-let metIds=JSON.parse(localStorage.getItem('pw_met')||'[]');
+let metIds=pwLoadJSON('pw_met','[]');
 function markMet(id){
   if(!metIds.includes(id)){metIds.push(id);localStorage.setItem('pw_met',JSON.stringify(metIds));}
 }
@@ -8758,12 +9571,12 @@ const MYTH_ENCOUNTERS=[
    conv:{speech:"I gave up an eye for wisdom. I hung from the world tree for nine days for knowledge. What have you sacrificed to learn something true?",choices:["Time and effort studying","Nothing yet","I'm not sure wisdom requires sacrifice"],responses:["Then you understand. Every walk is a small version of hanging from the tree — investing discomfort now for understanding later.","Then you are at the beginning, which is the best place to be. Huginn and Muninn fly out each morning and return to tell me everything. This journal is your raven.","Perhaps. But I notice that things that come easily are remembered lightly. What do you remember perfectly? I suspect something that cost you something."]},
    detail:`<p>The weekday names in English are a direct fossil of pre-Christian Norse and Roman religion — surviving 1,000 years of Christianity completely intact.</p><div class="detail-highlight">Tuesday (Tyr), Wednesday (Woden/Odin), Thursday (Thor), Friday (Frigg) — four of seven days carry Norse deity names. The other three carry Roman names: Saturday (Saturn), Sunday (Sol), Monday (Moon).</div><p>English and Spanish show the two traditions side by side: English Wednesday vs Spanish miércoles (Mercury's day). The linguistic boundary between Roman and Germanic influence is frozen in the names of the days.</p><div class="detail-source">Sources: Oxford English Dictionary etymology, Simek (1993).</div>`},
 
-  {id:"rome_forum",world:"rome",area:"forum",char:"Julius Caesar",charEmoji:"🦅",rare:false,
-   title:"You Checked Caesar's Calendar This Morning",
-   aha:{teaser:"Did you know? The calendar on your phone was literally designed by Julius Caesar in 45 BC. July is named after him. You use his invention every single day.",fact:"The Julian Calendar introduced months of set lengths and a leap year every 4 years. The Gregorian calendar is just a small precision correction made in 1582.",more:"September through December literally mean 7th through 10th month — they're now 9th through 12th because Romans added January and February later. You see this counting error every time you look at a calendar."},
-   story:{scene:"Caesar stands atop the Forum, looking over the city. 'My greatest conquest was not Gaul,' he says quietly. 'It was time itself. I organized the calendar so everyone in the empire knew what day it was. That,' he pauses, 'is still running.'",fact:"Before the Julian Calendar, the Roman calendar was so disorganized that Caesar had to add 90 extra days to fix it. The year 46 BC had 445 days. Romans called it 'the year of confusion.'"},
-   conv:{speech:"You have my calendar in your pocket right now. How does it feel to carry something 2,000 years old without knowing it?",choices:["Strange — I never thought about it","What else from Rome do I still use?","Why did the calendar get so confused?"],responses:["Most of civilization is like that — ancient foundations under modern surfaces. Your alphabet, legal rights, plumbing, calendar. You walk on Roman roads every day without seeing them.","Straight paved roads with drainage. Poured concrete (the Pantheon dome, unreinforced, has stood 2,000 years). The twelve-month calendar. Even the first daily public news bulletin — Julius Caesar invented it, posted in the Forum.","Roman priests controlled the calendar for political purposes — adding or removing days to extend their terms. Caesar, as dictator, had the power to fix it permanently — and did."]},
-   detail:`<p>The Julian Calendar (45 BC) is one of history's most enduring inventions — direct ancestor of the Gregorian calendar used worldwide today.</p><div class="detail-highlight">The Gregorian reform of 1582 only adjusted the leap year rule slightly. Caesar's core design — 365 days, 12 months, leap year every 4 years — was essentially correct for 1,600 years.</div><p>Month names tell the story: July honors Julius Caesar, August honors Augustus. September through December preserve the ghost of the older 10-month calendar — numerical names now misaligned by two, forever.</p><div class="detail-source">Sources: Richards (1998) "Mapping Time."</div>`},
+  {id:"rome_forum",world:"rome",area:"forum",char:"Jupiter",charEmoji:"⚡",rare:false,
+   title:"The Biggest Planet in the Sky Is Named After Him",
+   aha:{teaser:"Did you know? Jupiter, king of the Roman gods, gave his name to the largest planet in the solar system — because to Roman eyes, it was the brightest wandering star, and only the greatest god deserved it.",fact:"Jupiter (Iuppiter) ruled sky and thunder, equivalent to the Greek Zeus. His temple on Rome's Capitoline Hill — the Temple of Jupiter Optimus Maximus, 'Best and Greatest' — was the most important religious site in the entire Roman world.",more:"Roman generals returning from victory marched a 'triumph' straight to Jupiter's temple to give him credit for the win. The Capitoline temple stood, rebuilt after fires, for over 800 years."},
+   story:{scene:"Jupiter stands atop the Capitoline Hill, a thunderbolt loose in one hand, looking out over the Forum below. 'Caesar organized your calendar,' he says, almost amused. 'I organized the sky long before anyone thought to write dates down. Look up some clear night — the brightest wandering light after the Moon and Venus. That's still me.'",fact:"Jupiter is the largest planet in the solar system — more than twice the mass of every other planet combined. Ancient skywatchers with no telescope could still tell it apart from the fixed stars because it visibly moves against them, month to month."},
+   conv:{speech:"Every Thursday, half of Europe still says my name without knowing it. Do you know which half?",choices:["No — tell me","Is it the English-speaking half?","Something to do with thunder, maybe?"],responses:["Spanish jueves, French jeudi, Italian giovedì — all from Latin 'dies Iovis,' Jupiter's day. English took a different path: Thursday comes from Thor, the Norse thunder-god swapped in for me when Germanic tribes borrowed the Roman week.","The opposite, actually — English speakers usually have no idea, since Thursday points to Thor, not Jupiter. It's the Spanish, French, and Italian speakers walking around saying my name every week.","Exactly right. Thor and I are both sky-and-thunder gods, which is precisely why Germanic peoples swapped him in for me — same job, different name, when they borrowed the seven-day week from Rome."]},
+   detail:`<p>Jupiter was the chief god of Roman religion — sky, thunder, and the protector of Rome itself, worshipped at the Temple of Jupiter Optimus Maximus on the Capitoline Hill from the 6th century BC onward.</p><div class="detail-highlight">The English word "jovial" comes directly from "Jove," another name for Jupiter — astrologers believed anyone born under the planet Jupiter's influence would have a cheerful, generous temperament. The mood outlived the god by two thousand years.</div><p>The planet Jupiter is bright enough to see with the naked eye and was tracked by Babylonian, Greek, and Roman astronomers long before telescopes — its slow 12-year path through the stars made it a natural choice for the "king" of the visible wandering lights.</p><div class="detail-source">Sources: Beard, North & Price "Religions of Rome" (1998); Oxford English Dictionary etymology.</div>`},
 
   {id:"china_wall",world:"china",area:"wall",char:"Jade Emperor",charEmoji:"👑",rare:false,
    title:"Your Phone's Compass Was First a Fortune-Telling Tool",
@@ -8773,7 +9586,7 @@ const MYTH_ENCOUNTERS=[
    detail:`<p>The magnetic compass's journey from fortune-telling to navigation is history's most striking example of curiosity-driven knowledge becoming practical technology — with a 1,200-year delay.</p><div class="detail-highlight">The earliest written description of a navigation compass dates to 1088 AD in China. Lodestone compasses had already existed for over 1,000 years as divination tools by then.</div><p>The compass reached Europe via Arab traders around 1190 AD. Within 300 years it enabled Columbus, da Gama, and Magellan — all tracing back to a Chinese fortune-teller's polished spoon.</p><div class="detail-source">Sources: Needham (1962), Temple (1986).</div>`}
 ];
 const MYTH_THRESHOLDS={0:400,1:2000};
-let mythJournal=JSON.parse(localStorage.getItem('pw_myth_journal')||'[]');
+let mythJournal=pwLoadJSON('pw_myth_journal','[]');
 let currentMythCiv='japan';
 function civEncounters(civId){return MYTH_ENCOUNTERS.filter(e=>e.world===civId);}
 function saveMythJournalStore(){localStorage.setItem('pw_myth_journal',JSON.stringify(mythJournal));}
@@ -8938,10 +9751,20 @@ function renderMythJournal(){
   }
   list.innerHTML=mythJournal.map(j=>`
     <div class="journal-entry">
-      <div class="je-top"><div class="je-emo">${j.charEmoji}</div><div class="je-title">${j.title}</div><div class="je-date">${j.date}</div></div>
+      <div class="je-top"><div class="je-emo">${j.charEmoji}</div><div class="je-title">${j.title}</div><div class="je-date">${j.date}</div><button class="je-delete-btn" data-jid="${j.id}" title="Remove from journal" aria-label="Remove from journal" style="background:none;border:none;font-size:var(--fs-sm);color:var(--myth-ink3);cursor:pointer;padding:2px 4px;flex-shrink:0;">✕</button></div>
       <div class="je-fact">${j.teaser}</div>
     </div>`).join('');
 }
+// Journal delete — event delegation so buttons survive re-renders
+document.getElementById('myth-journal-list')?.addEventListener('click',e=>{
+  const btn=e.target.closest('.je-delete-btn');
+  if(!btn)return;
+  const id=btn.dataset.jid;
+  mythJournal=mythJournal.filter(j=>j.id!==id);
+  saveMythJournalStore();
+  const cEl=document.getElementById('myth-journal-count');if(cEl)cEl.textContent=mythJournal.length;
+  renderMythJournal();
+});
 document.querySelectorAll('.civ-chip').forEach(chip=>{
   chip.addEventListener('click',()=>{
     document.querySelectorAll('.civ-chip').forEach(c=>c.classList.remove('active'));
@@ -9234,7 +10057,7 @@ function layoutTopStack(){
   if(!hud)return;
   const hudBottom=Math.ceil(hud.getBoundingClientRect().bottom);
   const iconTop=hudBottom+6;
-  ['discover-btn','friend-clock-btn','season-quick-btn','accessories-btn'].forEach(id=>{
+  ['discover-btn','friend-clock-btn','season-quick-btn','accessories-btn','dog-friends-btn','mood-log-btn'].forEach(id=>{
     const el=document.getElementById(id);
     if(el)el.style.top=iconTop+'px';
   });
@@ -9412,7 +10235,7 @@ const NEWBORN_FACTS=[
   'A newborn puppy can\'t regulate its own body temperature yet and depends on its mother (or a warm space) for warmth.',
   'Puppies usually get their first round of vaccinations around 6–8 weeks old, with a full series needed before it\'s safe to be around other dogs.'
 ];
-let newborn=JSON.parse(localStorage.getItem('pw_newborn')||'null');
+let newborn=pwLoadJSON('pw_newborn','null');
 function saveNewborn(){ localStorage.setItem('pw_newborn',JSON.stringify(newborn)); }
 function maybeTriggerNewbornLitter(){
   if(newborn&&!newborn.ready) return;
@@ -9662,10 +10485,12 @@ function resetTalkChat(){
 document.getElementById('smenu-talk').addEventListener('click',()=>{
   settingsMenu.classList.remove('open');
   resetTalkChat();
+  setTalkNews(false);
   document.getElementById('talk-screen').classList.remove('hidden');
 });
 document.getElementById('talk-pup-btn').addEventListener('click',()=>{
   resetTalkChat();
+  setTalkNews(false);
   document.getElementById('talk-screen').classList.remove('hidden');
 });
 document.getElementById('btn-talk-close').addEventListener('click',()=>{
@@ -9690,6 +10515,22 @@ document.getElementById('talk-list').addEventListener('click',e=>{
 // added, fixed, or removed, a new entry goes at the TOP of this array —
 // {date:'Mon DD, YYYY', type:'added'|'fixed'|'removed'|'pending', text:'...'}
 const LAB_LOG=[
+  {date:'Sep 3, 2026',type:'fixed',text:"🐛 Hemisphere buttons AND the Real weather Turn on/off buttons doing nothing at all when tapped — no highlight, no status change, no banner. Root cause was much bigger than either feature: 12 separate places in the file loaded a saved value with a bare `JSON.parse(localStorage.getItem(key)||fallback)`, no try/catch (e.g. pw_garden, pw_friends, pw_home_city, pw_unlocked, pw_space_badges_earned, pw_dog_friends, pw_myth_journal, pw_newborn, pw_lab_notes, and others). If ANY ONE of those values ever became invalid JSON — a partial write during a storage-quota failure, an old/incompatible schema from a much earlier version, a hand-edited Save/Restore import — that JSON.parse throws a plain SyntaxError, and since this whole app is one script block, that single throw silently kills every statement after it in the file, including the Hemisphere and Real-weather button wiring (both defined later in the script than most of these). Reproduced exactly: set pw_garden to invalid JSON, confirmed hemisphere clicks did nothing; confirmed they work fine after the fix with the same corrupted value present. Fixed by routing all 12 through a new pwLoadJSON(key,fallback) helper that catches parse errors and falls back to that key's default — so one corrupted key now just resets that one feature to its default instead of breaking the rest of the app. (The two pre-existing JSON.parse calls for pw_activity_log/pw_mood_log already had their own try/catch and didn't need touching.)"},
+  {date:'Sep 3, 2026',type:'fixed',text:"🐛 \\\"Real weather\\\" toggle: tapping \\\"Turn on\\\" did nothing visible — no banner, no status change, stuck forever. Root cause: enableLocation() relied entirely on the browser's own geolocation {timeout:8000} option to eventually fire the error callback if permission isn't granted — but in sandboxed/embedded contexts (previews, WebViews without geolocation explicitly permitted) the browser can silently decline to call EITHER the success or error callback at all, so that built-in timeout never triggers either, and the button click produces zero feedback. Reproduced exactly: stubbed getCurrentPosition to never call back, confirmed nothing happened. Fixed with the app's own independent 9s fallback timer inside enableLocation() — if neither callback has fired by then, it now shows a banner (\\\"Couldn't get your location here — try opening this in your regular browser, or use the weather picker below instead\\\") and resets state, so the toggle always gives visible feedback either way. On a normal phone browser with geolocation actually available, this changes nothing — the real callback still wins normally, well under 9s."},
+  {date:'Sep 3, 2026',type:'fixed',text:"🐛 Console error: \\\"Uncaught TypeError: Cannot read properties of undefined (reading 'label')\\\" on every load. Root cause: the theme-status init line read `window.PW_THEMES[localStorage.getItem('pw_theme')].label` directly, with no fallback — unlike applyTheme() right above it, which safely does `PW_THEMES[name]||PW_THEMES.classic`. Any stale/invalid saved pw_theme value (e.g. a pre-migration name like 'theme3' on a browser where the one-time v2 migration flag was already set from an earlier session, so migrateThemeV2() skipped it) made this throw. Confirmed by reproducing it: setting pw_theme='theme3' + pw_theme_v2_done='1' reliably threw this exact error. Since the whole app is one script block, this single throw killed every statement below it on the page. Fixed to use the same safe PW_THEMES[name]||PW_THEMES.classic fallback, plus it now self-heals by resetting pw_theme to 'classic' in storage if the saved value doesn't match a real theme, so it won't recur for that browser."},
+  {date:'Sep 3, 2026',type:'added',text:"🧸🐶 Maple's Room realism pass — two things fixed/added:\\n\\n1) SIZE: the main puppy (already walk-out age) was rendering smaller than baby Maple (scale(0.55) → ~48px vs Maple's 72px SVG), backwards from reality. Main puppy now scale(0.85) in bringPuppyIn(), Maple's SVG shrunk to 54x57 — main pup now reads clearly bigger, and each pup has a small caption ('🎒 walk-ready' / '🍼 still a baby — no walks yet') making the age/walk-readiness gap explicit rather than implied.\\n\\n2) BEHAVIOR: added two new dog-to-dog interactions alongside Sniff/Play/Nap — 🙇 Play bow (universal play invitation, Maple's version deliberately wobblier/baby-clumsy vs main puppy's confident bow) and 🛡️ Watch over (the bigger puppy settles down calm and still — prSettle keyframe, yours-only — while Maple relaxes into it, reflecting real self-handicapping behavior between an older and much younger dog rather than rough play). Two new DYK facts added covering self-handicapping and why young puppies aren't walk-ready yet. All changes scoped to #playroom-overlay / the (function(){...})() IIFE — zero changes to the main puppy sprite, walk logic, or any other room."},
+  {date:'Sep 3, 2026',type:'fixed',text:"🐛 Found (during a check requested against the Sep 3 OPEN BACKLOG note below) that the OPEN BACKLOG entry had landed OUTSIDE the LAB_LOG array — sitting as a bare object literal directly above “const LAB_LOG=[” instead of inside it. That's invalid JS (confirmed with a syntax check: \"Unexpected token ':'\"), and since this app's entire script is one block, it would have broken EVERYTHING on the page, not just the Lab Mode screen. Moved the entry inside the array as the top item, where it always should have been. Likely cause: a merge/paste that dropped the line below the array-open bracket instead of above it."},
+  {date:'Sep 3, 2026',type:'pending',text:"📋 OPEN BACKLOG — corrected against an actual code audit (previous Sep 3 version had several items listed as “not built” that turned out to already be done — see ✅ CONFIRMED ALREADY BUILT below):\\n\\n🐶 ROOMS & PUPPY\\n• Per-era background art changes — scene shifts visually to match which journey era you're in. Bigger scope, no decision made.\\n\\n🗺️ ANCIENT WORLDS / MYTHS\\n• The Legend Trail (Ancient Worlds myth route) content — proposed replacement with 🌿 The Incense Route (Petra, Nabataeans, ~7th century BC) to make Ancient Worlds earn the word 'ancient'. ~10 new waypoints + new hand-drawn SVG landmark art needed. Not started.\\n• Trans-Saharan Gold & Salt Route (Mansa Musa) floated as a possible 4th Ancient Worlds route. Not started.\\n• Civilization roster expansion — how many total civs and figures per civ not decided. Paused.\\n• Myths & Legends step-gating — agreed to loosen/remove the 400-step / 2000-step unlock gates so it's freely browsable. Agreed in conversation, confirmed still in code (renderMythEncounters()/MYTH_THRESHOLDS) — NOT yet changed.\\n• Compare Myths — confirmed still a 2-theme prototype (Flood, Trickster, see MYTH_THEMES). Expanding depends on whether the format feels right first.\\n• Journal saving for Real History tab — confirmed still Myths & Legends-only.\\n\\n📐 DESIGN SYSTEM\\n• Scale sub-tab (Modern Earth) — confirmed still marked 🚧 in the UI, needs content/style rework. Not the same as Scale Journey (finished).\\n• Dropdowns at 13px — two dropdowns below Safari's auto-zoom floor, flagged but not fixed (don't trigger the specific zoom bug, left for a follow-up).\\n\\n🚴 CYCLING\\n• Cycling milestones — confirmed present in a sibling branch but still not ported here. Revisit if wanted.\\n\\n✅ CONFIRMED ALREADY BUILT (mislabeled “open” in the previous Sep 3 note — the work was done in earlier sessions and the backlog note just never got updated to reflect it):\\n• Puppy's Room seasonal decor (AC unit + spinning floor fan + lighter wall/floor tones + cooling mat) — built Aug 3, polished Aug 6. Live in applyPuppyRoomSeason().\\n• Raincoat overlay — built as a pure-CSS shape (same technique as Sunglasses, no art asset needed) — toggleRaincoat(), #p-raincoat, wired to Accessories + auto-triggers on rainy mood.\\n• Per-stop arrival reaction bubbles — built Sep 2 (triggerReactionBubble(), earthArrivalReactedIdx, flightArrivalReacted) for both Ancient Worlds and Modern Earth.\\n• Design-system pass step 4 (reusable text classes) — built Aug 3 (.chip-btn, .section-label, .subtitle, etc.). The Aug 3 log entry itself says “all 5 design-system steps now complete” — the Sep 3 note contradicted the app's own log.\\n• 'Bad weather, can't go out today' gating — already verified in THIS file (Aug 6: “gated on real weather… verified by forcing rainy weather”), not just present in PawTrail_fixed as the old note implied.\\n\\n✅ RESOLVED THIS SESSION (unchanged, still accurate):\\n• Journal delete ✓ (was in Jul 18 pending list — now built)\\n• Julius Caesar → Jupiter swap in Rome myths ✓ (done Aug 2026)\\n• Legend Trail name collision ✓ (done Sep 2 2026)\\n• Puppy's Friend room ✓ (done Sep 3 2026)\\n• Maple's Room / Playroom ✓ (done Sep 2 2026)\\n• Mood Log ✓ (done Sep 2 2026)"},
+  {date:'Sep 2, 2026',type:'added',text:"🧸🐶 Maple's Room (Playroom) built out — the 🚧 SOON stub replaced with a fully working companion/friend-puppy room. Maple is a completely independent mini-puppy: emoji-based avatar (no connection to the main puppy sprite or state machine), her own wander timer, 5 spots around the room she drifts between every 12–26 s, and a step-reactive mood bar that updates from your existing 'steps' variable — 5 mood tiers from sleepy nap (0 steps) up to zoomies at 10K+. Three interaction buttons (wave/throw ball/give treat) each play a bounce or wiggle animation and show a context reply bubble. Room art: purple wallpaper, toy chest, ball, rug, curtained window — Maple's own visual space, distinct from the existing Rooms 1–3. All code is pr- prefixed and IIFE-wrapped where shared, zero changes to the main puppy sprite, walk logic, or any existing room system. Also removed the 🚧 SOON badge from the House menu and updated the Test Mode jump button label."},
+  {date:'Sep 2, 2026',type:'added',text:"🐾 Mood Log quick-access button added to the main screen's top-left icon row (next slot after Dog Friends), so today's mood/note journal is reachable straight from the front screen (puppy outside), not just Settings → Mood Log — that entry is kept too, same dual-access pattern Friend Clocks already uses. Wired directly to the existing openMoodLogModal(); added to layoutTopStack()'s reflow list and hidden while Test Mode is open, matching every other icon in the row."},
+  {date:'Sep 2, 2026',type:'added',text:"🐾 Mood Log added (Settings → Mood Log) — a small opt-in daily journal: pick one of 6 mood emojis and/or a short note (120 chars), on-device only via a new 'pw_mood_log' key. Idea ported from a sibling app's post-walk \"how was the walk?\" popup, but reworked as an anytime diary rather than a walk-end trigger — this app has no discrete walk-start/walk-end event to hook that moment onto, since steps accumulate continuously from Apple Health rather than a live GPS session. One entry per calendar day; reopening the same day pre-fills the existing entry for editing instead of starting over. Added to isPuppyVisibleScreen()'s modal-guard list alongside the other settings modals. No changes to any existing walk/step/mood-picker logic — fully additive."},
+  {date:'Sep 2, 2026',type:'added',text:"🦴🐶 Dog Friends quick-access button added to the main screen's top-left icon row (Discover/Friend Clocks/Season/Accessories), matching the Friend Clocks button's two-line icon style. Previously Dog Friends was only reachable via a Discover tile, easy to miss (the same discoverability gap the earlier Talk/House status-dot pass was meant to solve, just for a different feature). Wired to the existing openDogFriendsScreen(); also added to the layoutTopStack() reflow list so it repositions correctly alongside the other icons on narrow phones, and hidden while Test Mode is open like its neighbors."},
+  {date:'Sep 2, 2026',type:'fixed',text:"🏛️ Rome's Myths & Legends entry swapped: Julius Caesar (a real historical person, not a myth — flagged as a mismatch in the Jul 18 pending note below) replaced with Jupiter, king of the Roman gods, matching every other civilization's deity-based entry (Athena, Odin, the Jade Emperor). New content covers the Temple of Jupiter Optimus Maximus, the planet named after him, the word \"jovial,\" and a Thursday/jueves/dies-Iovis etymology thread that deliberately echoes the existing Odin entry's own weekday-names material — two entries a curious reader can connect if they read both. Verified JS still parses clean after the edit."},
+  {date:'Sep 2, 2026',type:'fixed',text:"🩹 Modern Earth's World Map view — found and fixed a real bug from the previous session's own \"puppy-on-map presence\" edit: adding the flight-arrival-bubble SVG group accidentally dropped the map SVG's closing </svg> tag, leaving it unclosed. Confirmed via an HTML tag-balance check (previously only JS syntax + duplicate-ID checks had been run, which don't catch this class of bug) — the browser was left to guess where the map ended and the info card below it began, which is the actual root cause of the reported \"too tiny / not visible\" screen: elements were landing in the wrong place in the render tree, not just under-sized by CSS. Restored the missing </svg>. Also did a genuine balance pass on the same screen while here: (1) #flight-reach-legend and the shared .s-next class (used by Space/Galaxy/Earth/Flight's \"next\"/\"km to go\" line) bumped from barely-there gray (0.45 opacity, 2xs size) to readable weight (0.62 opacity, xs size, .s-next now semi-bold) — .s-next is shared, so this reads better on every journey panel, not just this one; (2) #flight-scene given min-height:200px so the map can't be squeezed down by the picker bar / mode-toggle row above it; (3) .fv-btn (World Map/Ascent Ladder/Scale/Scale Journey row) given line-height:1.25 and slightly more vertical padding so 2-line-wrapped labels on narrow phones don't crowd the button edge."},
+  {date:'Sep 2, 2026',type:'added',text:"🐶💬 Puppy-on-map presence, step 2: arrival reaction bubbles. Ancient Worlds and Modern Earth now pop a small speech bubble on the map itself — \"Woof! Made it to {place}! 🐾\" — the moment the puppy actually reaches a new stop, instead of the fact text just silently updating underneath. Built as its own persistent SVG group (parchment-arrival-bubble / flight-arrival-bubble) separate from the marker group that gets wiped and redrawn every progress tick, so a burst of updates during the same visit (e.g. Test Mode auto-walk) can't cut the fade-out short; a shared triggerReactionBubble() helper handles both. Fires once per new waypoint (earthArrivalReactedIdx) / once per completed route (flightArrivalReacted), seeded on load/route-pick so it never fires retroactively for progress already made before this session, and Ancient Worlds' idx-0 launch point is deliberately excluded (arriving back at the start isn't an arrival). Space Explorer intentionally gets no equivalent — see the map-puppy-bounce note from the previous entry, still an uncrewed probe by design."},
+  {date:'Sep 2, 2026',type:'added',text:"🐶🗺️ Puppy-on-map presence, step 1 (by request — journeys felt like tracking an abstract marker, not like the puppy was actually there). Ancient Worlds' parchment-map \"you are here\" marker swapped from a plain 🐾 paw to an actual 🐶 puppy face; both that marker and the Modern Earth flight marker now get a gentle idle bounce (new .map-puppy-bounce / @keyframes mapPuppyBounce) instead of sitting perfectly still, so it reads as the puppy standing/riding there rather than a pinned icon. Deliberately did NOT touch Space Explorer's probe marker (still 🛸/📡, no bounce, no puppy) — that panel's whole design is explicitly an uncrewed real spacecraft (see file header notes on Voyager-style one-way missions), so putting the puppy on it would contradict a decision already made and documented on purpose. NOT done this pass (flagged for a possible follow-up): per-stop arrival reaction bubbles and per-era background art — bigger scope, held off pending a decision on priority."},
+  {date:'Sep 2, 2026',type:'added',text:"🔔 Discoverability pass (by request — owner reported building a lot of features that quietly go unused because nothing on the main screen hints they're there). Two persistent status dots added, both reusing the app's existing dot pattern (same look as Accessories' has-active dot): (1) 💬 Talk button now gets a green dot whenever there's a fresh, context-relevant thing to say — fires on every real puppy state change (idle/walking/sleepy/happy) and every weather-mood change, via a new setTalkNews() hooked into setPuppyState() and setWeatherMood(). Clears the instant Talk is actually opened, from either entry point (floating button or Settings menu). (2) 🏠 House button now gets an orange dot whenever it's a hot day (real summer or self-reported Hot mood) — the exact condition that already swaps Puppy's Room into its cooling decor (AC unit + fan) — so the room's fan feature stops being invisible unless you already remembered to check. Hooked into applyPuppyRoomSeason()'s existing `cooling` flag, the single place that condition was already being computed, rather than duplicating the hot-day check a third time. Both are read-only status indicators — no new state added, nothing saved — so a fresh load reflects current puppy mood / weather instantly. Also fixed 3 duplicate `id` attributes found during this pass (#space-info, #sp-progress-track, #human-reach-legend each appeared on two different panels, invalid HTML that could break future getElementById/querySelector lookups by ID) — second occurrence of each renamed (galaxy-info, gx-progress-track, flight-reach-legend) with matching CSS extended so visual styling is unchanged."},
+  {date:'Sep 1, 2026',type:'fixed',text:"🪭 Outdoor hand fan (🎒 Accessories → 🪭 Hand fan) was silently blocked outside of summer and the hot weather mood — tapping it in any other season showed 'Too cool out', greyed out the chip, and did nothing, including the wave animation. The gate (fanIsAvailable()) was inherited from an earlier draft; the actual intention was always any-time use. Removed the block entirely: the fan now works in all seasons and all weather moods. Banner text adapts — hot day still says 'Ahh, nice and cool!', any other day says 'A little breeze for you!' The chip no longer appears greyed-out in non-summer months."},
   {date:'Aug 6, 2026',type:'fixed',text:"📐 Rotate-prompt false positive: a short, wide preview pane on desktop (an editor or chat UI's embedded file preview, for instance) was triggering the same \"rotate back to portrait\" message meant for actual phones turned sideways — dimensions alone can't tell those two apart, since a preview panel can easily be just as short-and-wide as a real landscape phone. Added (hover:none) and (pointer:coarse) to the condition, the standard way to detect an actual touchscreen with no mouse — a desktop reports hover+fine-pointer no matter how small its window gets, so it's now correctly excluded regardless of pane size, while a real phone in landscape still gets the prompt exactly as before. Verified both directions directly: a touch-disabled 800×400 page (desktop preview stand-in) no longer shows it, a touch-enabled 844×390 page (real phone landscape) still does."},
   {date:'Aug 6, 2026',type:'fixed',text:"📐 Cross-device audit (by request — iPhone as default, but also other phones, tablets, and desktop). Actually rendered the app at 9 real device sizes in a headless browser rather than reasoning about CSS in the abstract, and found 3 real, reproducible issues: (1) On narrower phones (confirmed down to 360px, e.g. many Android phones), the STREAK stat card was getting covered by the settings gear button — the HUD row didn't know the gear button existed and stretched its 4 cards edge-to-edge into the same space. Fixed by reserving space for it. (2) Rotating a phone to landscape was a full launch-blocker, not a cosmetic issue — tested onboarding at a real phone-landscape size (844×390) and the primary button was already cut off with the secondary button completely unreachable, no way to scroll to it either. Since this app's whole layout (scene, every panel, every icon row) is built as one portrait screen with ~40 position:fixed elements at fixed pixel offsets — genuinely redoing that as a fluid multi-orientation layout would mean redesigning the app, not fixing it — added a dedicated rotate-to-portrait prompt instead, the standard pattern for portrait-only mobile games/apps. Tuned to a max-height:500px threshold so it only ever fires on an actual phone turned sideways, confirmed it does NOT fire on iPad or desktop in landscape (both well over that height). (3) Tablet and desktop were worse than just 'not optimized' — rendered at 1440px and found stat cards stretched into thin pills, the puppy lost in a huge dark void, floating buttons scattered with no visual relationship to each other. Rather than a partial fluid-layout patch, applied the same pattern X/Instagram/Threads use for their own mobile web apps on desktop: keep the phone layout fully intact and center it in a fixed-width frame (max 480px) with a neutral letterbox background, using transform:translateZ(0) on the frame so the ~40 fixed-position elements throughout the app anchor to the frame instead of the real browser window — confirmed this was necessary, not decorative, since without it every one of those elements would've stayed pinned to the actual window edges and the frame trick wouldn't have worked at all. Re-verified all 9 device sizes after the fixes, including confirming ordinary iPhone widths render byte-for-byte the same as before (this only activates ≥700px). Also switched full-viewport sizing to 100dvh (2024–2026 standard) so mobile browser address-bar show/hide doesn't cause height jumps, and bumped one outlier label (House button, 7px — smaller than every comparable label elsewhere in the app) up to 9px for consistency."},
   {date:'Aug 6, 2026',type:'fixed',text:"🌓 Contrast fix, two separate root causes traced from 3 screenshots (main HUD, Add a past ride, onboarding). Root cause 1 — Fluid Glass's tint (rgba(255,255,255,0.55) white, in every one of the 4 App Look themes) was too translucent: with backdrop-filter blur sampling whatever's actually behind it, a card over a dark scene or the standard dark modal scrim blends down to medium-gray, and the theme's dark text was never designed for that. Bumped the glass tint's opacity to 0.80 in all 4 themes (plus the pre-theme default) — enough more opaque to stay readable against any backdrop while still visibly more translucent than the 0.90 solid-card variant, so Fluid Glass still reads as glass. Root cause 2, independent of Fluid Glass entirely — onboarding, Discover, the Manual screens, Baby puppy, Talk to Puppy, and Export all swap their own background to solid dark in night mode, but nothing ever redefined the var(--txt)/var(--txt-m) text-color variables to match — so e.g. \"Meet your puppy!\" was dark brown on near-black, confirmed by rendering onboarding in night mode and seeing it nearly disappear, the exact bug reported. Fixed by redefining those two variables to a light color, scoped to just those six containers specifically (not body-wide) since other cards genuinely stay light at night and would break the opposite way if touched globally. Re-verified all 3 original scenarios after the fix by rendering them again the same way they were reported — main HUD (glass+night), Add a past ride (glass+night), onboarding (night) — all clearly legible now, plus checked day-mode with Fluid Glass on for regressions since that touches every glass surface in the app."},
@@ -9795,7 +10636,7 @@ function renderLabLog(){
     list.appendChild(row);
   });
 }
-let labNotes=JSON.parse(localStorage.getItem('pw_lab_notes')||'[]');
+let labNotes=pwLoadJSON('pw_lab_notes','[]');
 function saveLabNotes(){localStorage.setItem('pw_lab_notes',JSON.stringify(labNotes));}
 function renderLabNotes(){
   const list=document.getElementById('lab-notes-list');
@@ -10366,103 +11207,8 @@ document.getElementById('smenu-raincoat').addEventListener('click',()=>{
 });
 restoreRaincoat();
 
-// 🎒 Accessories quick-menu — same Sunglasses/Raincoat toggles already in
-// Settings, surfaced as tap-to-see icons in the main scene instead of
-// buried in a menu, plus a new outdoor Hand fan gesture (hot/summer only).
-// Deliberately reuses toggleSunglasses()/toggleRaincoat() rather than
-// duplicating their state — this menu is just a second entry point to the
-// exact same on/off state Settings already tracks.
-const accessoriesBtn=document.getElementById('accessories-btn');
-const accessoriesMenu=document.getElementById('accessories-menu');
-function fanIsAvailable(){
-  return getSeason()==='summer'||weatherMood==='hot';
-}
-function syncAccessoryChips(){
-  const sgChip=document.getElementById('acc-chip-sunglasses');
-  const sgState=document.getElementById('acc-state-sunglasses');
-  sgChip.classList.toggle('selected',sunglassesOn);
-  sgState.textContent=sunglassesOn?'On':'Off';
-  const rcChip=document.getElementById('acc-chip-raincoat');
-  const rcState=document.getElementById('acc-state-raincoat');
-  rcChip.classList.toggle('selected',raincoatOn);
-  rcState.textContent=raincoatOn?'On':'Off';
-  const fanChip=document.getElementById('acc-chip-fan');
-  const fanState=document.getElementById('acc-state-fan');
-  const available=fanIsAvailable();
-  fanChip.classList.toggle('disabled',!available);
-  fanState.textContent=available?'Tap to use':'Too cool out';
-  accessoriesBtn.classList.toggle('has-active',sunglassesOn||raincoatOn);
-}
-accessoriesBtn.addEventListener('click',e=>{
-  e.stopPropagation();
-  syncAccessoryChips(); // weather may have changed since last open
-  accessoriesMenu.classList.toggle('open');
-});
-document.addEventListener('click',()=>accessoriesMenu.classList.remove('open'));
-accessoriesMenu.addEventListener('click',e=>e.stopPropagation());
-document.getElementById('acc-chip-sunglasses').addEventListener('click',toggleSunglasses);
-document.getElementById('acc-chip-raincoat').addEventListener('click',toggleRaincoat);
-let outdoorFanWaveTimer=null;
-function usePortableFan(){
-  if(!fanIsAvailable()){
-    showBanner('🪭 Save it for a hot day!');
-    return;
-  }
-  const icon=document.getElementById('acc-fan-icon');
-  icon.classList.remove('waving');
-  void icon.offsetWidth;
-  icon.classList.add('waving');
-  clearTimeout(outdoorFanWaveTimer);
-  outdoorFanWaveTimer=setTimeout(()=>icon.classList.remove('waving'),1000);
-  showBanner('🪭 Ahh, nice and cool!');
-  if(!isCyclingActive&&currentPuppyState!=='sleepy'){
-    const prevState=currentPuppyState;
-    setPuppyState('happy');
-    setTimeout(()=>{ if(currentPuppyState==='happy') setPuppyState(prevState); },1800);
-  }
-  spawnHeart();
-}
-document.getElementById('acc-chip-fan').addEventListener('click',usePortableFan);
-syncAccessoryChips();
+// (Accessories quick-menu + Hand fan init moved to the top of this script — see near the <script> tag opening — so it registers before anything else in this file has a chance to fail. See comment there for why.)
 
-// 🌀❄️ Fan/Cooler — Puppy's Room only, manual toggle, never weather-triggered
-// on purpose. Controls the wall-AC + floor-fan artwork down in the room
-// scene (previously only shown automatically in summer); the curtains sway
-// along with it too, so the breeze reads as one thing actually moving air
-// through the room rather than three unrelated animations.
-let houseFanOn=localStorage.getItem('pw_house_fan')==='1';
-function updateHouseFanVisual(){
-  const ac=document.getElementById('puppyroom-ac');
-  const fan=document.getElementById('puppyroom-fan');
-  const fanBlades=document.getElementById('puppyroom-fan-blades');
-  if(ac)ac.style.display=houseFanOn?'':'none';
-  if(fan)fan.style.display=houseFanOn?'':'none';
-  if(fanBlades)fanBlades.classList.toggle('spin',houseFanOn);
-  document.getElementById('puppyroom-curtain-l')?.classList.toggle('sway',houseFanOn);
-  document.getElementById('puppyroom-curtain-r')?.classList.toggle('sway',houseFanOn);
-}
-function toggleHouseFan(){
-  houseFanOn=!houseFanOn;
-  localStorage.setItem('pw_house_fan',houseFanOn?'1':'0');
-  updateHouseFanVisual();
-  showBanner(houseFanOn?'🌀 Fan on — nice and cool!':'Fan off 🐶');
-}
-updateHouseFanVisual();
-
-// Each tap = one real fanning motion (the icon waves twice, ~1s total),
-// same as an owner actually waving it — it does nothing on its own between
-// taps. Reuses the same reaction/mood system as pet/toy/water/food so the
-// puppy's response is consistent with every other hands-on interaction.
-let uchiwaWaveTimer=null;
-function waveUchiwa(){
-  const icon=document.getElementById('uchiwa-icon');
-  icon.classList.remove('waving');
-  void icon.offsetWidth; // restart the animation if tapped again mid-wave
-  icon.classList.add('waving');
-  clearTimeout(uchiwaWaveTimer);
-  uchiwaWaveTimer=setTimeout(()=>icon.classList.remove('waving'),1000);
-  houseInteract('uchiwa');
-}
 
 updateNursery();
 setInterval(updateNursery,60000);
@@ -10576,6 +11322,22 @@ document.getElementById('force-day-btn').addEventListener('click',()=>{
   if(!isCyclingActive && currentPuppyState==='sleepy'){ setPuppyState('idle'); }
   showBanner('☀️ Forced day mode — puppy is awake');
 });
+// ═══ TEST MODE — jump to any feature/panel directly (QA shortcut; only
+// skips reaching the SCREEN — content gated inside a screen by real step
+// count is unaffected). Ported from PuppyWalk_core.html, extended with
+// this file's Playroom/Backyard rooms and myth-panel naming. ═══
+document.querySelectorAll('.panel-jump-btn').forEach(btn=>{
+  btn.addEventListener('click',()=>{
+    const house=btn.dataset.house;
+    if(house==='room2'){closeAnyOpenRoom();openRoom2();return;}
+    if(house==='room3'){closeAnyOpenRoom();enterPuppyHouse();return;}
+    if(house==='playroom'){closeAnyOpenRoom();openPlayroom();return;}
+    if(house==='friendroom'){closeAnyOpenRoom();openFriendRoom();return;}
+    if(house==='backyard'){closeAnyOpenRoom();enterBackyard();return;}
+    openPanel(btn.dataset.panel,btn.dataset.sub);
+  });
+});
+
 document.getElementById('clear-force-btn').addEventListener('click',()=>{
   forcedNightOverride=null;
   updateTimeOfDay();
@@ -10741,6 +11503,65 @@ document.getElementById('clear-activity-log')?.addEventListener('click',()=>{
   activityLog=[];localStorage.setItem('pw_activity_log','[]');renderActivityLog();
 });
 
+// ═══ MOOD LOG — daily emoji + note journal, opt-in, on-device only. Idea
+// ported from a sibling app's post-walk mood popup; reworked here as an
+// anytime diary (one entry per calendar day) since this app tracks steps
+// continuously from Apple Health rather than discrete GPS walk sessions, so
+// there's no single "walk just ended" moment to hook a popup onto. ═══
+let moodLog=[];
+try{moodLog=JSON.parse(localStorage.getItem('pw_mood_log')||'[]');}catch(e){moodLog=[];}
+function todayDateStr(){
+  const d=new Date();
+  return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
+}
+let moodLogSelected=null;
+function openMoodLogModal(){
+  const today=todayDateStr();
+  const existing=moodLog.find(e=>e.date===today);
+  moodLogSelected=existing?existing.mood:null;
+  document.getElementById('mood-log-note').value=existing?existing.note:'';
+  document.querySelectorAll('.mood-log-emoji-btn').forEach(b=>{
+    b.style.borderColor=(b.dataset.mood===moodLogSelected)?'var(--accent)':'rgba(0,0,0,0.08)';
+  });
+  renderMoodLog();
+  document.getElementById('mood-log-modal').style.display='flex';
+}
+function renderMoodLog(){
+  const list=document.getElementById('mood-log-list');
+  if(!list)return;
+  const past=moodLog.filter(e=>e.date!==todayDateStr());
+  if(past.length===0){list.innerHTML='<div style="opacity:0.5;">No past entries yet.</div>';return;}
+  list.innerHTML=past.slice(0,30).map(e=>{
+    const noteHtml=e.note?(' — '+e.note.replace(/</g,'&lt;')):'';
+    return '<div>'+e.date+' '+(e.mood||'')+noteHtml+'</div>';
+  }).join('');
+}
+document.querySelectorAll('.mood-log-emoji-btn').forEach(btn=>{
+  btn.addEventListener('click',()=>{
+    moodLogSelected=(moodLogSelected===btn.dataset.mood)?null:btn.dataset.mood;
+    document.querySelectorAll('.mood-log-emoji-btn').forEach(b=>{
+      b.style.borderColor=(b.dataset.mood===moodLogSelected)?'var(--accent)':'rgba(0,0,0,0.08)';
+    });
+  });
+});
+document.getElementById('mood-log-save-btn')?.addEventListener('click',()=>{
+  const today=todayDateStr();
+  const note=document.getElementById('mood-log-note').value.trim().slice(0,120);
+  if(!moodLogSelected&&!note)return;
+  moodLog=moodLog.filter(e=>e.date!==today);
+  moodLog.unshift({date:today,mood:moodLogSelected,note,ts:Date.now()});
+  localStorage.setItem('pw_mood_log',JSON.stringify(moodLog));
+  renderMoodLog();
+  document.getElementById('mood-log-modal').style.display='none';
+});
+document.getElementById('smenu-mood-log')?.addEventListener('click',()=>{
+  settingsMenu.classList.remove('open');
+  openMoodLogModal();
+});
+document.getElementById('mood-log-close-btn')?.addEventListener('click',()=>{
+  document.getElementById('mood-log-modal').style.display='none';
+});
+
 // ── APP LOOK — a small picker of full palette+font swaps via the shared CSS
 // variables; nothing about layout or behavior changes either way, and it's
 // saved so it sticks. All FREE, none are a paid tier — just different looks.
@@ -10781,7 +11602,20 @@ function applyTheme(name){
   document.querySelectorAll('.theme-swatch-btn').forEach(b=>b.classList.toggle('selected',b.dataset.theme===name));
 }
 applyFluidGlass(localStorage.getItem('pw_fluid_glass')==='1');
-document.getElementById('theme-status').textContent=window.PW_THEMES[localStorage.getItem('pw_theme')||'classic'].label;
+// Defensive fallback: read the saved theme name the same safe way applyTheme()
+// does (PW_THEMES[name]||PW_THEMES.classic). The old direct-index version here
+// had no fallback, so any stale/invalid pw_theme value (e.g. a name from
+// before a rename, or corrupted storage) threw "Cannot read properties of
+// undefined (reading 'label')" on this single top-level line — and since
+// this whole file is one script block, that one throw silently killed every
+// script statement below it on the page. Also self-heals the stored value.
+(function(){
+  const savedTheme=localStorage.getItem('pw_theme')||'classic';
+  if(!window.PW_THEMES[savedTheme]){
+    localStorage.setItem('pw_theme','classic');
+  }
+  document.getElementById('theme-status').textContent=(window.PW_THEMES[savedTheme]||window.PW_THEMES.classic).label;
+})();
 document.getElementById('smenu-theme').addEventListener('click',()=>{
   settingsMenu.classList.remove('open');
   document.querySelectorAll('.theme-swatch-btn').forEach(b=>b.classList.toggle('selected',b.dataset.theme===(localStorage.getItem('pw_theme')||'classic')));
@@ -11041,6 +11875,7 @@ if(sessionStorage.getItem('pw_restore_banner')){
 function isPuppyVisibleScreen(){
   if(document.getElementById('backyard-overlay').classList.contains('open'))return true;
   if(document.getElementById('playroom-overlay').classList.contains('open'))return false;
+  if(document.getElementById('friendroom-overlay').classList.contains('open'))return false;
   if(document.getElementById('puppy-house').classList.contains('open'))return true;
   if(document.getElementById('room2-overlay').classList.contains('open'))return true;
   if(document.body.classList.contains('panel-open'))return activePanel==='home';
@@ -11049,6 +11884,7 @@ function isPuppyVisibleScreen(){
   if(document.getElementById('meet-modal').style.display==='flex')return false;
   if(document.getElementById('friends-modal').style.display==='flex')return false;
   if(document.getElementById('activity-log-modal').style.display==='flex')return false;
+  if(document.getElementById('mood-log-modal').style.display==='flex')return false;
   if(document.getElementById('location-modal').style.display==='flex')return false;
   if(!document.getElementById('user-manual-screen').classList.contains('hidden'))return false;
   if(!document.getElementById('health-manual-screen').classList.contains('hidden'))return false;
