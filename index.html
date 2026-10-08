@@ -85,7 +85,30 @@
      Explorer destination picker.
 
 ───────────────────────────────────────────────────────────────────────────
- THIS FILE IS THE CURRENT CANONICAL VERSION (as of Sep 1, 2026).
+ THIS FILE IS THE CURRENT CANONICAL VERSION (as of Oct 8, 2026) — the
+ refined "new core". Any older copy (for example an unmodified what_changed
+ file without the items below) is SUPERSEDED: when comparing, keep this file's
+ behavior and port only what it genuinely lacks.
+
+ Oct 8, 2026 — refinements that define this core (do not revert in a merge):
+   - Sunglasses style discoverability (the 8-style picker used to be invisible
+     unless you already knew it existed):
+       1. Accessories chip reads "8 styles" when off; shows the current style's
+          icon + name when on (syncAccessoryChips, window.sgStyleIcon/Count).
+       2. Red dot on the 🎒 button + NEW pill on the chip while body.sg-unseen;
+          cleared by sgMarkSeen() when the picker opens. Key: pw_sg_seen.
+          Counts as seen if pw_sunglasses_style already exists, so existing
+          users are never nagged.
+       3. Hot/Nice weather mood auto-shades are followed by a tappable banner
+          ("Tap here to pick a style") until the picker has been found.
+          New helper showBannerAction(); plain showBanner() clears any action.
+   - Help text now mentions the styles; LAB_LOG has the matching Oct 8 entry.
+   - 🐾 HOME button is shown ONLY while a room/panel/Discover screen is
+     open (CSS body:has(...) rule), sits bottom-right at z-index 190 (below menus and
+     dialogs). Never show it on the main screen: it shared the 🚴 button's spot and hid it.
+   If a merge drops any of these, it reintroduces the "feature exists but
+   nobody can find it" problem this pass was written to fix.
+
  If you're comparing this against another copy/branch/version in a future
  conversation or project, treat differences here as intentional unless
  this comment block or the in-app Lab/Log says otherwise.
@@ -155,7 +178,7 @@
   --accent:#ff6b35;--gold:#f5c518;--sleepy:#9b7dbf;
   --space:#060d1f;--space-mid:#0d1f3c;--earth:#1a3a1a;--earth-mid:#2a5a2a;--flight-sky:#0a2540;--sky-mid:#123a5c;
   --badge:#ff3b30;
-  --fs-2xs:10px;--fs-xs:11px;--fs-sm:13px;--fs-md:15px;--fs-base:17px;--fs-lg:20px;--fs-xl:24px;--fs-2xl:28px;--fs-btn:17px;
+  --fs-2xs:12px;--fs-xs:12px;--fs-sm:13px;--fs-md:15px;--fs-base:17px;--fs-lg:20px;--fs-xl:24px;--fs-2xl:28px;--fs-btn:17px;
   /* Myths & Legends encounter cards — light "storybook" palette, distinct from the dark trail cards */
   --myth-bg:#f5f0e8;--myth-bg2:#ede5d8;--myth-border:#ddd0b8;--myth-gold-soft:#e8d48a;--myth-ink:#3a2a1a;--myth-ink2:#6a5a4a;--myth-ink3:#9a8a7a;
   --myth-green:#5a8a5a;--myth-peach:#f0d8c0;--myth-sage:#d8e8d0;--myth-lavender:#e0d8f0;
@@ -319,6 +342,15 @@ body.test-mode-open #mood-log-btn{display:none;}
 body.test-mode-open #accessories-btn{display:none;}
 #accessories-btn .acc-dot{position:absolute;top:-2px;right:-2px;width:12px;height:12px;border-radius:50%;background:#34c759;border:2px solid var(--card);display:none;}
 #accessories-btn.has-active .acc-dot{display:block;}
+/* Sunglasses-styles discoverability: red dot on the 🎒 button + a NEW pill on the
+   Sunglasses chip, both shown only while body.sg-unseen (cleared the first time
+   the picker is opened, or if a style was already picked in the past). */
+#accessories-btn .acc-new{position:absolute;top:-3px;left:-3px;width:12px;height:12px;border-radius:50%;background:#ff3b30;border:2px solid var(--card);display:none;}
+body.sg-unseen #accessories-btn .acc-new{display:block;}
+.acc-chip{position:relative;}
+.acc-chip-new{position:absolute;top:-6px;right:-4px;background:#ff3b30;color:#fff;font-size:9px;font-weight:800;padding:1px 5px;border-radius:8px;letter-spacing:0.3px;display:none;}
+body.sg-unseen #acc-chip-sunglasses .acc-chip-new{display:block;}
+#mood-banner.actionable{pointer-events:all;cursor:pointer;border-color:var(--accent);}
 #accessories-menu{position:fixed;top:calc(var(--sat) + 96px);left:14px;z-index:200;background:var(--card);border-radius:16px;border:1px solid var(--card-border);backdrop-filter:var(--glass-blur);overflow:hidden;transform:scale(0.9) translateY(-10px);opacity:0;pointer-events:none;transition:all 0.2s cubic-bezier(0.34,1.56,0.64,1);transform-origin:top left;box-shadow:0 1px 2px rgba(0,0,0,0.06),0 8px 24px rgba(0,0,0,0.12),0 20px 48px rgba(0,0,0,0.08),inset 0 1px 0 var(--rim-light);padding:10px;display:flex;gap:8px;}
 #accessories-menu.open{transform:scale(1) translateY(0);opacity:1;pointer-events:all;}
 .acc-chip{display:flex;flex-direction:column;align-items:center;gap:4px;width:66px;padding:10px 4px 8px;border-radius:13px;border:1.5px solid rgba(0,0,0,0.08);background:transparent;cursor:pointer;font-family:inherit;}
@@ -501,7 +533,11 @@ body.panel-open #walk-reminder-btn{display:none;}
 @keyframes wbRipple{0%,100%{transform:scaleX(0.5);opacity:0}50%{transform:scaleX(1);opacity:0.8}}
 #water-bowl.drinking #wb-ripple{opacity:1;}
 #wb-thirst-badge{position:absolute;top:-14px;left:50%;transform:translateX(-50%);font-size:var(--fs-xs);font-weight:700;background:rgba(255,255,255,0.9);border-radius:10px;padding:1px 6px;white-space:nowrap;opacity:0;transition:opacity 0.4s;color:#c05000;}
-#water-bowl.visible #wb-thirst-badge{opacity:1;}
+#water-bowl.visible #wb-thirst-badge{opacity:1;z-index:12;}
+/* While the puppy is at the water bowl, fade the floating 💬 / ⏰ bubbles beside it —
+   they sit at the same height and were drawing over the bowl and its "Good walk!" label. */
+#talk-pup-btn,#walk-reminder-btn{transition:opacity 0.3s;}
+body:has(#water-bowl.visible) #talk-pup-btn,body:has(#water-bowl.visible) #walk-reminder-btn{opacity:0;pointer-events:none;}
 .state-pant #p-head{animation:pantHead 0.25s ease-in-out infinite;}
 .state-pant #p-tongue{opacity:1;animation:pantTongue 0.25s ease-in-out infinite;}
 .state-pant #p-tail{animation:tailWag .5s ease infinite;}
@@ -609,7 +645,7 @@ body.night-mode #hud{background:linear-gradient(to bottom,rgba(13,27,42,0.97) 72
 body.night-mode #shared-pill{background:rgba(13,27,42,0.82);color:rgba(255,255,255,0.6);}
 
 /* ── MOOD BANNER ── */
-#mood-banner{position:fixed;bottom:calc(var(--sab) + 108px);left:50%;transform:translateX(-50%);background:var(--card);border-radius:28px;padding:8px 18px;font-size:var(--fs-sm);font-weight:600;color:var(--txt);backdrop-filter:var(--glass-blur);opacity:0;transition:opacity 0.5s;pointer-events:none;white-space:nowrap;z-index:40;border:1px solid var(--card-border);}
+#mood-banner{position:fixed;bottom:calc(var(--sab) + 210px);left:50%;transform:translateX(-50%);background:var(--card);border-radius:28px;padding:8px 18px;font-size:var(--fs-sm);font-weight:600;color:var(--txt);backdrop-filter:var(--glass-blur);opacity:0;transition:opacity 0.5s;pointer-events:none;white-space:nowrap;z-index:210;border:1px solid var(--card-border);}
 #mood-banner.visible{opacity:1;}
 
 /* ── MILESTONE BAR ── */
@@ -626,7 +662,7 @@ body.night-mode #milestone-bar{background:linear-gradient(to top,rgba(13,27,42,0
 #panel-btn{position:fixed;right:0;top:50%;transform:translateY(-50%);z-index:60;display:flex;flex-direction:column;gap:5px;padding:10px 5px;background:var(--card);border-radius:14px 0 0 14px;border:1px solid var(--card-border);border-right:none;backdrop-filter:var(--glass-blur);}
 .pnl-tab{position:relative;width:40px;height:40px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:var(--fs-lg);cursor:pointer;transition:background 0.2s;border:none;background:transparent;}
 .pnl-tab.active{background:rgba(255,107,53,0.14);}
-.tab-badge{position:absolute;top:2px;right:2px;min-width:16px;height:16px;border-radius:8px;background:var(--badge);color:#fff;font-size:9px;font-weight:800;display:flex;align-items:center;justify-content:center;padding:0 3px;border:2px solid #fff;opacity:0;transform:scale(0);transition:opacity 0.3s,transform 0.3s cubic-bezier(0.34,1.56,0.64,1);pointer-events:none;}
+.tab-badge{position:absolute;top:2px;right:2px;min-width:16px;height:16px;border-radius:8px;background:var(--badge);color:#fff;font-size:12px;font-weight:800;display:flex;align-items:center;justify-content:center;padding:0 3px;border:2px solid #fff;opacity:0;transform:scale(0);transition:opacity 0.3s,transform 0.3s cubic-bezier(0.34,1.56,0.64,1);pointer-events:none;}
 .tab-badge.visible{opacity:1;transform:scale(1);}
 body.night-mode .tab-badge{border-color:var(--night);}
 
@@ -976,11 +1012,11 @@ body.space-dream-mode.puppy-super #orrery-craft{filter:drop-shadow(0 0 6px #bf8f
 .trail-dot.current{width:18px;height:18px;background:var(--gold);animation:routePulse 1.5s ease-in-out infinite;display:flex;align-items:center;justify-content:center;font-size:var(--fs-2xs);}
 .trail-line{width:18px;height:2px;background:rgba(255,255,255,0.18);margin-top:6px;flex-shrink:0;}
 .trail-line.unlocked{background:#5a8a4a;}
-.trail-label{font-size:9px;color:rgba(255,255,255,0.4);max-width:50px;text-align:center;line-height:1.2;}
+.trail-label{font-size:12px;color:rgba(255,255,255,0.4);max-width:50px;text-align:center;line-height:1.2;}
 .trail-label.current{color:var(--gold);font-weight:700;}
-#earth-map{flex-shrink:0;position:relative;margin:0 auto;width:140px;border-radius:14px;overflow:hidden;background:#f3e3bf;aspect-ratio:300/160;box-shadow:0 1px 0 rgba(255,255,255,0.08) inset;}
+#earth-map{flex-shrink:0;position:relative;margin:0 auto;width:min(100%,260px);border-radius:14px;overflow:hidden;background:#f3e3bf;aspect-ratio:300/160;box-shadow:0 1px 0 rgba(255,255,255,0.08) inset;}
 #landmark-svg{display:block;width:100%;height:100%;}
-#landmark-pill{position:absolute;top:4px;left:4px;right:4px;background:rgba(255,255,255,0.88);border-radius:10px;padding:2px 6px;font-size:8px;font-weight:700;color:#412402;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+#landmark-pill{position:absolute;top:4px;left:4px;right:4px;background:rgba(255,255,255,0.88);border-radius:10px;padding:2px 6px;font-size:12px;font-weight:700;color:#412402;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
 #earth-map-scroll{flex:1;position:relative;overflow-x:auto;overflow-y:hidden;min-height:0;background:#cdb888;-webkit-overflow-scrolling:touch;}
 #parchment-svg{display:block;}
 .route-dot{transition:opacity 0.3s;}
@@ -1043,7 +1079,7 @@ body.night-mode #baby-screen{background:var(--night);}
 
 /* ══ HOUSE MENU — picks Room 1/2/3 ══ */
 #house-menu-btn{position:fixed;bottom:calc(var(--sab) + 96px);left:16px;z-index:55;width:56px;height:56px;border-radius:50%;background:var(--card);border:1.5px solid rgba(0,0,0,0.08);box-shadow:0 4px 16px rgba(0,0,0,0.12);display:flex;flex-direction:column;align-items:center;justify-content:center;font-size:var(--fs-xl);cursor:pointer;backdrop-filter:var(--glass-blur);}
-#house-menu-btn .hmb-label{font-size:9px;font-weight:800;color:var(--txt-m);letter-spacing:0.5px;margin-top:-2px;}
+#house-menu-btn .hmb-label{font-size:12px;font-weight:800;color:var(--txt-m);letter-spacing:0.5px;margin-top:-2px;}
 /* "Room needs a peek" dot — lights up whenever it's a hot day (real summer or
    self-reported Hot mood), the exact condition that already swaps in the
    room's AC/fan decor (see applyPuppyRoomSeason's `cooling` flag). The fan
@@ -1081,6 +1117,98 @@ body.test-mode-open .apple-quick-btn{display:none;}
 #analog-clock svg{width:100%;height:100%;display:block;backdrop-filter:var(--glass-blur);border-radius:50%;}
 #analog-clock line{transition:transform 0.25s cubic-bezier(0.4,0,0.2,1);transform-box:view-box;transform-origin:50px 50px;}
 body.test-mode-open #analog-clock{display:none;}
+/* ── Apple Health easy-setup guide ── */
+.hm-lead{font-size:var(--fs-base) !important;color:var(--txt) !important;font-weight:600;}
+.hm-step{display:flex;gap:12px;background:var(--card);border:1px solid var(--card-border);border-radius:16px;padding:14px;margin:10px 0;}
+.hm-num{flex-shrink:0;width:30px;height:30px;border-radius:50%;background:var(--accent);color:#fff;font-weight:800;font-size:15px;display:flex;align-items:center;justify-content:center;}
+.hm-step-body{flex:1;min-width:0;}
+.hm-step-title{font-size:16px;font-weight:800;color:var(--txt);margin-bottom:4px;}
+.hm-step-body p{font-size:15px !important;line-height:1.6 !important;margin-bottom:6px !important;}
+.hm-step-body b{color:var(--txt);}
+.hm-chip{display:inline-block;background:rgba(0,0,0,0.07);border-radius:8px;padding:1px 8px;font-weight:700;color:var(--txt);font-size:14px;}
+.hm-tip{font-size:14px !important;background:rgba(255,193,7,0.16);border-left:3px solid #e0a800;border-radius:8px;padding:8px 10px;margin:6px 0 2px !important;}
+.hm-linkbox{background:rgba(0,0,0,0.05);border-radius:12px;padding:10px;margin:8px 0;}
+.hm-linkbox code{display:block;font-family:ui-monospace,Menlo,monospace;font-size:13px;word-break:break-all;color:var(--txt);margin-bottom:8px;user-select:text;-webkit-user-select:text;}
+.hm-copy{width:100%;padding:11px;border:none;border-radius:12px;background:var(--accent);color:#fff;font-size:15px;font-weight:800;cursor:pointer;}
+.hm-warn{font-size:14px !important;color:#b3261e !important;font-weight:700;margin-top:6px !important;}
+.hm-mock{margin:8px 0 4px;display:flex;flex-direction:column;gap:6px;}
+.hm-act{display:flex;align-items:flex-start;gap:10px;background:#fff;color:#1c1c1e;border-radius:12px;padding:9px 11px;box-shadow:0 1px 3px rgba(0,0,0,0.12);font-size:14px;line-height:1.35;}
+.hm-act .ic{font-size:20px;flex-shrink:0;}
+.hm-act b{display:block;color:#1c1c1e;font-size:14px;}
+.hm-act span{color:#6b6b70;}
+.hm-act em{font-style:normal;color:#0a84ff;font-weight:700;}
+
+/* ── Sunglasses picker ── */
+#sg-modal{position:fixed;inset:0;z-index:600;background:rgba(0,0,0,0.45);display:none;align-items:center;justify-content:center;padding:20px;}
+#sg-modal.open{display:flex;}
+#sg-card{background:var(--card);backdrop-filter:var(--glass-blur);border-radius:22px;padding:18px 16px 16px;width:100%;max-width:340px;box-shadow:0 12px 40px rgba(0,0,0,0.3);position:relative;text-align:center;}
+#sg-card .sg-title{font-size:var(--fs-base);font-weight:800;color:var(--txt);margin-bottom:12px;}
+#sg-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:10px;}
+.sg-opt{display:flex;flex-direction:column;align-items:center;gap:6px;padding:10px 6px;border-radius:14px;border:2px solid transparent;background:rgba(0,0,0,0.05);cursor:pointer;font-size:12px;font-weight:700;color:var(--txt);}
+.sg-opt svg{width:84px;height:24px;}
+.sg-opt.active{border-color:var(--accent);background:rgba(62,92,76,0.14);}
+#sg-off{margin-top:12px;width:100%;padding:11px;border-radius:14px;border:1.5px solid rgba(0,0,0,0.12);background:transparent;color:var(--txt-m);font-size:var(--fs-sm);font-weight:700;cursor:pointer;}
+#sg-close{position:absolute;top:8px;right:8px;}
+
+/* ── Pocket mode + Welcome-back summary ── */
+#pocket-overlay{position:fixed;inset:0;z-index:9500;background:#000;display:none;flex-direction:column;align-items:center;justify-content:center;gap:18px;padding:24px;text-align:center;color:rgba(255,255,255,0.55);touch-action:none;-webkit-user-select:none;user-select:none;-webkit-touch-callout:none;}
+#pocket-overlay.on{display:flex;}
+#pocket-overlay .pk-title{font-size:var(--fs-md);font-weight:700;letter-spacing:0.4px;}
+#pocket-count{font-size:56px;font-weight:800;color:rgba(255,255,255,0.7);font-variant-numeric:tabular-nums;line-height:1;}
+#pocket-overlay .pk-sub{font-size:var(--fs-sm);color:rgba(255,255,255,0.45);}
+#pocket-note{font-size:var(--fs-xs);color:rgba(255,200,120,0.7);max-width:300px;line-height:1.5;display:none;}
+#pocket-note.show{display:block;}
+#pocket-hold{position:relative;width:200px;min-height:56px;border-radius:28px;border:1.5px solid rgba(255,255,255,0.3);background:rgba(255,255,255,0.06);color:rgba(255,255,255,0.6);font-size:var(--fs-sm);font-weight:700;display:flex;align-items:center;justify-content:center;overflow:hidden;touch-action:none;margin-top:16px;}
+#pocket-hold .pk-fill{position:absolute;left:0;top:0;bottom:0;width:0;background:rgba(255,255,255,0.22);transition:width 0s;}
+#pocket-hold.holding .pk-fill{width:100%;transition:width 1.5s linear;}
+#pocket-hold span{position:relative;}
+#wback-modal{position:fixed;inset:0;z-index:9000;background:rgba(0,0,0,0.5);display:none;align-items:center;justify-content:center;padding:20px;}
+#wback-modal.open{display:flex;}
+#wback-card{background:var(--card);backdrop-filter:var(--glass-blur);border-radius:22px;padding:22px 18px 18px;width:100%;max-width:340px;box-shadow:0 12px 40px rgba(0,0,0,0.3);text-align:center;}
+#wback-card .wb-ic{font-size:40px;}
+#wback-card .wb-title{font-size:var(--fs-base);font-weight:800;color:var(--txt);margin:4px 0 8px;}
+#wback-card .wb-big{font-size:40px;font-weight:800;color:var(--accent);font-variant-numeric:tabular-nums;line-height:1.1;}
+#wback-card .wb-line{font-size:var(--fs-sm);color:var(--txt-m);margin-top:6px;line-height:1.5;}
+#wback-ok{margin-top:16px;width:100%;padding:12px;border-radius:14px;border:none;background:var(--accent);color:#fff;font-size:var(--fs-md);font-weight:800;cursor:pointer;}
+
+/* ═══ Ported features: HOME paw button, manual weather chip, frisbee, custom talk box ═══ */
+/* HOME (🐾): a "back to the main screen" shortcut, so it is only shown while a room, panel
+   or Discover is open — never on the main screen itself, where it
+   covered the 🚴 cycle button (same spot, higher z-index). z-index 190 keeps it above rooms
+   and panels (150/70) but BELOW the Settings/Accessories menus and dialogs (200+), so it no
+   longer floats over Walk reminder, Friend Clocks, Settings, etc. */
+#home-paw-btn{position:fixed;bottom:calc(var(--sab) + 18px);right:14px;z-index:190;width:48px;height:48px;border-radius:50%;background:var(--card);border:1.5px solid rgba(0,0,0,0.08);box-shadow:0 4px 16px rgba(0,0,0,0.16);display:none;flex-direction:column;align-items:center;justify-content:center;font-size:19px;cursor:pointer;backdrop-filter:var(--glass-blur);opacity:0.92;}
+body:has(#room2-overlay.open,#puppy-house.open,#backyard-overlay.open,#playroom-overlay.open,#friendroom-overlay.open,#side-panel.open,#discover-screen.open) #home-paw-btn{display:flex;}
+#home-paw-btn .hpb-label{font-size:10px;font-weight:800;color:var(--txt-m);letter-spacing:0.5px;margin-top:-2px;}
+#home-paw-btn:active{background:rgba(0,0,0,0.04);}
+#weather-report-btn{position:fixed;bottom:calc(var(--sab) + 368px);left:72px;z-index:55;height:44px;min-width:44px;padding:0 12px 0 0;border-radius:22px;background:var(--card);border:1.5px solid var(--card-border);box-shadow:0 3px 12px rgba(0,0,0,0.12);display:none;align-items:center;gap:0;cursor:pointer;backdrop-filter:var(--glass-blur);overflow:hidden;}
+#weather-report-btn.visible{display:flex;}
+.wr-icon{width:44px;height:44px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:20px;flex-shrink:0;}
+.wr-chip-text{display:flex;flex-direction:column;align-items:flex-start;line-height:1.15;padding-right:2px;}
+.wr-chip-label{font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:0.4px;color:var(--txt-m);opacity:0.7;}
+.wr-chip-value{font-size:12px;font-weight:700;color:var(--txt);white-space:nowrap;}
+#weather-report-btn.wr-danger{box-shadow:0 0 0 2.5px rgba(232,80,60,0.4),0 3px 12px rgba(0,0,0,0.12);}
+#weather-report-btn.wr-hot,#weather-report-btn.wr-extreme{background:linear-gradient(135deg,rgba(255,158,68,0.32),rgba(232,80,60,0.22));}
+#weather-report-btn.wr-cold,#weather-report-btn.wr-snow{background:linear-gradient(135deg,rgba(120,180,255,0.3),rgba(180,220,255,0.24));}
+#weather-report-btn.wr-storm{background:linear-gradient(135deg,rgba(120,110,160,0.32),rgba(90,90,120,0.24));}
+#weather-report-btn.wr-rain{background:linear-gradient(135deg,rgba(120,160,200,0.26),rgba(150,180,210,0.2));}
+body.test-mode-open #weather-report-btn{display:none !important;}
+#weather-report-popup{position:fixed;bottom:calc(var(--sab) + 420px);left:72px;z-index:500;background:var(--card);backdrop-filter:var(--glass-blur);border:1px solid var(--card-border);border-radius:16px;padding:10px;box-shadow:0 8px 28px rgba(0,0,0,0.2);width:188px;opacity:0;pointer-events:none;transform:scale(0.92);transform-origin:bottom left;transition:opacity 0.16s,transform 0.16s;}
+#weather-report-popup.open{opacity:1;pointer-events:auto;transform:scale(1);}
+.wr-title{font-size:12px;font-weight:700;color:var(--txt-m);margin-bottom:8px;text-align:center;}
+.wr-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;}
+.wr-opt{width:38px;height:38px;border-radius:10px;background:rgba(0,0,0,0.05);display:flex;align-items:center;justify-content:center;font-size:18px;cursor:pointer;border:1.5px solid transparent;}
+.wr-opt.active{border-color:var(--accent);background:rgba(62,92,76,0.14);}
+body:has(.manual-screen:not(.hidden)) #home-paw-btn,body:has(#onboarding-screen:not(.hidden)) #home-paw-btn,body:has(#onboarding-screen:not(.hidden)) #weather-report-btn,body:has(#onboarding-screen:not(.hidden)) #weather-report-popup{display:none !important;}
+#backyard-frisbee{position:absolute;left:50%;bottom:34%;transform:translateX(-50%);font-size:22px;opacity:0;pointer-events:none;z-index:6;transition:left 0.65s cubic-bezier(0.3,0,0.4,1),bottom 0.65s cubic-bezier(0.3,0,0.4,1),opacity 0.2s;}
+#backyard-frisbee-spin{display:inline-block;}
+#backyard-frisbee.flying #backyard-frisbee-spin{animation:frisbeeSpin 0.65s linear;}
+@keyframes frisbeeSpin{from{transform:rotate(0deg);}to{transform:rotate(540deg);}}
+#talk-custom-row{display:flex;gap:8px;width:100%;max-width:320px;}
+#talk-custom-input{flex:1;padding:10px 14px;border-radius:14px;border:1.5px solid rgba(0,0,0,0.12);background:var(--card);color:var(--txt);font-size:var(--fs-sm);outline:none;min-width:0;}
+#talk-custom-input:focus{border-color:var(--accent);}
+#btn-talk-send{padding:0 16px;border-radius:14px;border:none;background:var(--accent);color:#fff;font-size:18px;cursor:pointer;}
+
 /* 🌡️ Real weather chip — continues the same left-column stack above the
    analog clock. Shows the actual GPS-detected condition (only ever written
    to from refreshWeatherFromLocation()/applyWeatherScene()), separate from
@@ -1090,7 +1218,7 @@ body.test-mode-open #analog-clock{display:none;}
 body.test-mode-open #real-weather-chip{display:none;}
 .rwc-icon{width:40px;height:40px;flex:none;display:flex;align-items:center;justify-content:center;font-size:var(--fs-base);}
 .rwc-text{display:flex;flex-direction:column;align-items:flex-start;line-height:1.15;padding-right:2px;}
-.rwc-label{font-size:8px;font-weight:700;text-transform:uppercase;letter-spacing:0.4px;color:var(--txt-m);opacity:0.7;}
+.rwc-label{font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:0.4px;color:var(--txt-m);opacity:0.7;}
 .rwc-value{font-size:var(--fs-xs);font-weight:700;color:var(--txt);white-space:nowrap;}
 #test-quick-badge{display:none;position:absolute;top:-3px;right:-3px;width:12px;height:12px;border-radius:50%;background:#ff3b30;border:2px solid var(--card);}
 #test-quick-btn.active #test-quick-badge{display:block;}
@@ -1244,7 +1372,7 @@ body.night-mode #baby-screen,body.night-mode #talk-screen-card,body.night-mode #
 /* privacy card inside onboarding */
 .privacy-card{background:rgba(255,107,53,0.08);border:1px solid rgba(255,107,53,0.2);border-radius:16px;padding:14px 16px;max-width:320px;width:100%;text-align:left;}
 .privacy-card .pc-title{font-size:var(--fs-sm);font-weight:700;color:var(--accent);margin-bottom:5px;}
-.privacy-card .pc-body{font-size:var(--fs-xs);color:var(--txt-m);line-height:1.6;}
+.privacy-card .pc-body{font-size:var(--fs-sm);color:var(--txt-m);line-height:1.6;}
 
 .ob-btn-primary{background:var(--accent);color:#fff;border:none;border-radius:28px;padding:15px 40px;font-size:var(--fs-lg);font-weight:700;cursor:pointer;box-shadow:0 4px 20px rgba(255,107,53,0.35);transition:transform 0.1s;width:100%;max-width:280px;}
 .ob-btn-primary:disabled{opacity:0.55;cursor:default;box-shadow:none;}
@@ -1338,7 +1466,7 @@ body.night-mode #talk-screen-card::after{background:var(--night);}
 .friend-city{font-size:var(--fs-xs);color:var(--txt-m);}
 .friend-weather{font-size:var(--fs-2xs);color:var(--txt-m);opacity:0.8;margin-top:1px;}
 .friend-time{font-size:var(--fs-md);font-weight:800;color:var(--txt);font-variant-numeric:tabular-nums;white-space:nowrap;}
-.day-offset-tag{font-size:9px;font-weight:700;color:#ffb43c;background:rgba(255,180,60,0.15);border-radius:6px;padding:1px 5px;margin-left:5px;white-space:nowrap;}
+.day-offset-tag{font-size:12px;font-weight:700;color:#ffb43c;background:rgba(255,180,60,0.15);border-radius:6px;padding:1px 5px;margin-left:5px;white-space:nowrap;}
 .friend-del-btn{background:none;border:none;color:var(--txt-m);font-size:var(--fs-md);cursor:pointer;padding:2px 4px;flex-shrink:0;}
 .friend-info-btn{background:none;border:none;font-size:var(--fs-md);cursor:pointer;padding:2px 4px;flex-shrink:0;}
 .fview-toggle{display:flex;gap:6px;margin-bottom:8px;}
@@ -1472,6 +1600,7 @@ body.night-mode #talk-screen-card::after{background:var(--night);}
     <div style="font-size:44px;margin-bottom:8px;">🍎</div>
     <div class="subtitle">Add steps from Health</div>
     <div style="font-size:var(--fs-sm);color:var(--txt-m);margin-bottom:14px;">Check your Health app → Browse → Steps, then type today's total.</div>
+    <button id="import-open-guide" style="background:none;border:none;color:var(--accent);font-weight:800;font-size:var(--fs-sm);text-decoration:underline;margin-bottom:12px;cursor:pointer;">Want it automatic? See the easy setup guide →</button>
     <div class="field-label">Today's steps</div>
     <div style="margin-bottom:8px;">
       <input type="number" id="import-input" placeholder="e.g. 3500" inputmode="numeric"
@@ -1545,6 +1674,12 @@ body.night-mode #talk-screen-card::after{background:var(--night);}
     <button class="talk-btn" data-key="proud" data-ctx="any">🏅 I'm proud of you</button>
     <button class="talk-btn" data-key="bye" data-ctx="idle,sleepy">👋 Bye for now, be good</button>
   </div>
+
+  <div id="talk-custom-row">
+    <input type="text" id="talk-custom-input" placeholder="Or write your own…" maxlength="60">
+    <button id="btn-talk-send" aria-label="Send">🐾</button>
+  </div>
+
   </div>
 </div>
 
@@ -1566,7 +1701,7 @@ body.night-mode #talk-screen-card::after{background:var(--night);}
 
   <div class="baby-tip-card">
     <div class="btc-title">🐾 Thinking about a real puppy?</div>
-    <div class="btc-body">Real puppies take more care than most people expect — weeks of no outdoor walks while they're too young and unvaccinated, round-the-clock feeding and potty training, vet visits, and constant supervision. It's a big commitment before that first real walk ever happens. This little one is a gentle reminder of what that stage is really like.</div>
+    <div class="btc-body">Real puppies need a lot of care before their first walk: feeding around the clock, potty training, vet visits, and no outdoor walks until vaccinated. This little one shows what that stage is like.</div>
   </div>
 
   <div style="display:flex;gap:8px;width:100%;max-width:300px;">
@@ -1677,14 +1812,15 @@ body.night-mode #talk-screen-card::after{background:var(--night);}
 <!-- Friend Clocks quick-access — same modal as Settings → Friend Clocks -->
 <button id="friend-clock-btn" title="Friend Clocks"><span class="fcb-clock">🕐</span><span class="fcb-dog">🐶</span></button>
 <button id="season-quick-btn" title="Season — tap to change"><span class="szn-glyph">🌸</span><span id="season-quick-dot" class="wrb-dot" style="display:none;"></span></button>
-<button id="accessories-btn" title="Accessories">🎒<span class="acc-dot"></span></button>
+<button id="accessories-btn" title="Accessories">🎒<span class="acc-dot"></span><span class="acc-new"></span></button>
 <button id="dog-friends-btn" title="Dog Friends"><span class="dfb-bone">🦴</span><span class="dfb-dog">🐶</span></button>
 <button id="mood-log-btn" title="Mood Log">🐾</button>
 <div id="accessories-menu">
   <button class="acc-chip" id="acc-chip-sunglasses">
-    <span class="acc-chip-icon">😎</span>
+    <span class="acc-chip-new">NEW</span>
+    <span class="acc-chip-icon" id="acc-icon-sunglasses">😎</span>
     <span class="acc-chip-label">Sunglasses</span>
-    <span class="acc-chip-state" id="acc-state-sunglasses">Off</span>
+    <span class="acc-chip-state" id="acc-state-sunglasses">8 styles</span>
   </button>
   <button class="acc-chip" id="acc-chip-raincoat">
     <span class="acc-chip-icon">🧥</span>
@@ -1718,6 +1854,7 @@ body.night-mode #talk-screen-card::after{background:var(--night);}
   <div class="smenu-item" id="smenu-discover"><span class="smenu-icon">🧭</span>Discover</div>
   <div class="smenu-item" id="smenu-talk"><span class="smenu-icon">💬</span>Talk to Puppy</div>
   <div class="smenu-item" id="smenu-import"><span class="smenu-icon">🍎</span>Add steps from Health</div>
+  <div class="smenu-item" id="smenu-pocket"><span class="smenu-icon">🔒</span>Pocket mode</div>
   <div class="smenu-item" id="smenu-past-ride"><span class="smenu-icon">🚴</span>Add past ride</div>
   <div class="smenu-item" id="smenu-export"><span class="smenu-icon">💾</span>Save / Restore data</div>
   <div class="smenu-item" id="smenu-testmode"><span class="smenu-icon">🧪</span>Test mode</div>
@@ -1824,7 +1961,7 @@ body.night-mode #talk-screen-card::after{background:var(--night);}
       <li>Nothing ever locks back up, and nothing needs an internet connection — everything unlocked stays unlocked.</li>
     </ol>
     <h3>How walking and cycling connect to exploration</h3>
-    <p>Your phone's motion sensor (or Apple Health import) counts your walking steps, and the 🚴 cycling toggle tracks ride distance separately. Both feed into the very same progress used across every Discover section — so a walk to the shops and a weekend bike ride both push your puppy further along every journey at once.</p>
+    <p>Your phone's motion sensor (or Apple Health import) counts your steps. The 🚴 toggle tracks cycling separately. Both move your puppy forward in every journey at once.</p>
     <p>Prefer not to use motion tracking? Tap "I'll tap instead" during setup, or add steps manually any time from the ⚙️ settings menu — Discover unlocks the same way either way.</p>
     <button class="manual-back-home-btn" id="back-home-user-manual">🏠 Back to Home</button>
   </div>
@@ -1834,15 +1971,81 @@ body.night-mode #talk-screen-card::after{background:var(--night);}
 <div id="health-manual-screen" class="manual-screen hidden">
   <div class="manual-header"><h2>🍏 Apple Health Manual</h2><button class="close-btn" id="close-health-manual">✕</button></div>
   <div class="manual-body">
-    <h3>Step-by-step setup</h3>
-    <ol>
-      <li>Open the Shortcuts app on your iPhone (it comes pre-installed with iOS).</li>
-      <li>Create a new shortcut that reads your step count from the Health app.</li>
-      <li>Add an action to send that number to this app using the "Add steps from Health" option in the ⚙️ settings menu.</li>
-      <li>Run the shortcut whenever you'd like to bring your latest steps in — no account or sign-in needed.</li>
-    </ol>
+    <h3>⚡ Easy setup — about 3 minutes</h3>
+    <p class="hm-lead">Your iPhone can send <b>today's step total</b> to this app with one tap. You set it up once, then just tap it each day. No coding. Follow the steps in order.</p>
+
+    <div class="hm-step"><div class="hm-num">1</div><div class="hm-step-body">
+      <div class="hm-step-title">Open the Shortcuts app</div>
+      <p>It has a <b>pink-and-purple icon</b> with two overlapping squares, and it is already on your iPhone. Can't find it? Swipe down on your Home Screen and type <span class="hm-chip">Shortcuts</span>.</p>
+    </div></div>
+
+    <div class="hm-step"><div class="hm-num">2</div><div class="hm-step-body">
+      <div class="hm-step-title">Make a new shortcut</div>
+      <p>Tap <b>+</b> (top right). Tap the name at the top and call it <span class="hm-chip">Send Steps to Puppy</span>.</p>
+    </div></div>
+
+    <div class="hm-step"><div class="hm-num">3</div><div class="hm-step-body">
+      <div class="hm-step-title">Add: Find Health Samples</div>
+      <p>Tap <b>Add Action</b>, search <span class="hm-chip">Find Health Samples</span> and tap it. Then set two things by tapping the blue words:</p>
+      <p>• <b>Type</b> → <span class="hm-chip">Step Count</span><br>• <b>Start Date</b> → <span class="hm-chip">is Today</span></p>
+      <p class="hm-tip">If you don't see a filter row, tap <b>Add Filter</b>. The first time you run it, iPhone asks to read your steps. Tap <b>Allow</b>.</p>
+    </div></div>
+
+    <div class="hm-step"><div class="hm-num">4</div><div class="hm-step-body">
+      <div class="hm-step-title">Add: Calculate Statistics</div>
+      <p>Search <span class="hm-chip">Calculate Statistics</span> and tap it. Tap the blue word <b>Average</b> and change it to <span class="hm-chip">Sum</span>. This adds up all your steps for today.</p>
+    </div></div>
+
+    <div class="hm-step"><div class="hm-num">5</div><div class="hm-step-body">
+      <div class="hm-step-title">Add: Round Number</div>
+      <p>Search <span class="hm-chip">Round Number</span> and tap it. This turns something like 5231.4 into a clean <b>5231</b>.</p>
+    </div></div>
+
+    <div class="hm-step"><div class="hm-num">6</div><div class="hm-step-body">
+      <div class="hm-step-title">Add: Text (this holds your link)</div>
+      <p>Search <span class="hm-chip">Text</span> and tap it. Tap <b>Copy my link</b> below, then tap the Text box and <b>Paste</b>.</p>
+      <div class="hm-linkbox">
+        <code id="hm-app-link">…</code>
+        <button class="hm-copy" id="hm-copy-btn">📋 Copy my link</button>
+        <p class="hm-warn" id="hm-link-warn" style="display:none;"></p>
+      </div>
+      <p>Right after the <b>=</b> sign, tap the grey <span class="hm-chip">Rounded Number</span> bubble above your keyboard. The text should end like <b>…?daily=<u>Rounded Number</u></b>.</p>
+      <p class="hm-tip">Don't change the <b>?daily=</b> part. The app uses it to find your steps.</p>
+    </div></div>
+
+    <div class="hm-step"><div class="hm-num">7</div><div class="hm-step-body">
+      <div class="hm-step-title">Add: Open URLs</div>
+      <p>Search <span class="hm-chip">Open URLs</span> and tap it. Its input should say <b>Text</b>. If it says <b>URLs</b>, tap it and choose the <b>Text</b> bubble.</p>
+    </div></div>
+
+    <p style="margin-top:12px;font-weight:700;color:var(--txt);">✅ Your finished shortcut should look like this:</p>
+    <div class="hm-mock">
+      <div class="hm-act"><span class="ic">❤️</span><div><b>Find Health Samples</b><span>Type is <em>Step Count</em>, Start Date is <em>Today</em></span></div></div>
+      <div class="hm-act"><span class="ic">📊</span><div><b>Calculate Statistics</b><span><em>Sum</em> of Health Samples</span></div></div>
+      <div class="hm-act"><span class="ic">🔢</span><div><b>Round Number</b><span>Statistics to <em>Ones Place</em></span></div></div>
+      <div class="hm-act"><span class="ic">📝</span><div><b>Text</b><span>your link…<em>?daily=</em><em>Rounded Number</em></span></div></div>
+      <div class="hm-act"><span class="ic">🌐</span><div><b>Open URLs</b><span><em>Text</em></span></div></div>
+    </div>
+
+    <div class="hm-step"><div class="hm-num">8</div><div class="hm-step-body">
+      <div class="hm-step-title">Try it!</div>
+      <p>Tap the <b>▶ Play</b> button at the bottom. Safari opens this app and asks <b>"Update your puppy?"</b>. Tap <b>OK</b>. Your puppy gets today's steps! 🐶</p>
+    </div></div>
+
+    <div class="hm-step"><div class="hm-num">9</div><div class="hm-step-body">
+      <div class="hm-step-title">Make it one tap (optional)</div>
+      <p>In the shortcut, tap the <b>ⓘ / Details</b> button → <b>Add to Home Screen</b>. Now one tap on that icon sends your steps. You can also say <span class="hm-chip">Hey Siri, Send Steps to Puppy</span>.</p>
+    </div></div>
+
+    <h3>👍 Good to know</h3>
+    <ul>
+      <li><b>Run it as many times as you like.</b> The app only adds steps it has not counted yet today. Nothing is counted twice.</li>
+      <li><b>Every day starts fresh.</b> Tomorrow, run it again and today's new steps are added.</li>
+      <li><b>Number bigger than the Health app?</b> iPhone and Apple Watch can both record steps. In step 3, tap <b>Add Filter</b> → <b>Source</b> → choose just one device.</li>
+      <li><b>Safari vs Home Screen:</b> an app on your Home Screen and the same app in Safari save progress separately. The shortcut may open the link in Safari, so try to use the same one each time.</li>
+    </ul>
     <h3>Permissions</h3>
-    <p>The first time your shortcut reads step data, iOS will ask for permission to access Health data. Choose "Allow" (or "Turn On All") so the shortcut can read your step count. This app itself never asks for or receives direct HealthKit access — it only ever sees the number your shortcut sends it.</p>
+    <p>The first time, iOS asks for permission to read Health data. Choose "Allow" (or "Turn On All") so the shortcut can read your steps. This app never accesses HealthKit directly. It only receives the number your shortcut sends.</p>
     <h3>Auto Sync</h3>
     <p>Normally, when your shortcut hands off step data this app asks "Update your puppy?" before applying it. Turn Auto Sync on to skip that confirmation and apply Health data the instant it arrives — handy if you run the shortcut often and trust it.</p>
     <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;background:rgba(0,0,0,0.03);border-radius:12px;padding:10px 12px;margin-top:6px;">
@@ -1877,7 +2080,7 @@ body.night-mode #talk-screen-card::after{background:var(--night);}
         <b>Weather:</b> Weather Mood Picker (no-location self-report) + optional real GPS sunrise &amp; weather + 🕐 analog clock on the main screen<br>
         <b>Seasons:</b> 5-stage spring blossom cycle (synced between the main scene and the Backyard tree), snow with varied color/density/size, autumn leaf color variety<br>
         <b>🌱 Garden:</b> 2-plot Backyard planting (Tomato/Carrot/Strawberry/Sunflower), real calendar-day growth, harvest shelf in Puppy's Room<br>
-        <b>Accessories:</b> 😎 Sunglasses, 🌩️ Storm reaction — in Settings → Preferences<br>
+        <b>Accessories:</b> 😎 Sunglasses (8 styles — tap 🎒 Accessories → Sunglasses, or Settings), 🧥 Raincoat, 🌩️ Storm reaction<br>
         <b>🦴 Dog Friends:</b> named neighbor dogs (breed + facts), persistent tiers, journal screen, 🍼 Newborn Puppy arc (16-day calendar growth, ❤️ Closeness, "peek in")<br>
         <b>🕐 Friend Clocks:</b> up to 6 friends by city, real local time, "Tomorrow/Yesterday there" date-offset tag<br>
         <b>Dev tools (Settings → Dev Mode):</b> 🧪 Test mode, 🧫 Lab Mode (build log + personal notes), 📋 Activity Log<br>
@@ -1885,6 +2088,8 @@ body.night-mode #talk-screen-card::after{background:var(--night);}
       </div>
     </div>
     <h3>Latest</h3>
+    <p>✨ <b>🔒 Pocket mode.</b> Settings → Pocket mode turns the screen black (so it uses little light) while puppy keeps counting steps. Taps are ignored; press and hold the button for about 1.5 seconds to unlock. The screen stays awake while it is on, because a web page cannot count steps once iPhone puts it to sleep. If the screen does lock, a note tells you counting paused so you can catch up with the Health shortcut.</p>
+    <p>✨ <b>🐾 Welcome-back summary.</b> After a Health sync adds steps or cycling, a card shows “While you were away: +N steps”, today's total and how long you were gone.</p>
     <p>✨ <b>A more "expensive" feel, no new images.</b> A subtle film-grain texture over the whole app (you'll feel it more than see it), richer layered shadows instead of flat ones on every menu/modal/sheet, a soft light-catching highlight along the top edge of cards (especially with Fluid Glass on), and steadier-looking numbers on the stat counters. All pure CSS/SVG — nothing to download, nothing added to load time.</p>
     <p>✨ <b>Puppy's Room now redecorates for summer</b> (or a self-reported Hot day) — a wall AC unit, a spinning floor fan, swaying curtains, and the bed swapped for a pale cooling mat. This was the last piece carried over from the original three-file merge.</p>
     <p>✨ <b>Design-system pass, complete.</b> One real type scale everywhere instead of hundreds of one-off text sizes, body text at Apple's own 17px default, pinch-to-zoom restored, every button meeting the 44×44pt tap-target minimum (invisibly — nothing actually looks bigger), and a dozen repeated inline styles turned into reusable classes so the same "chip button" or "section label" look is defined once, not copy-pasted everywhere. All done without changing how anything visually looks unless it was genuinely too small to read or tap.</p>
@@ -2199,6 +2404,53 @@ body.night-mode #talk-screen-card::after{background:var(--night);}
     <circle cx="50" cy="50" r="3" fill="var(--txt)"/>
   </svg>
 </div>
+
+<div id="pocket-overlay" role="dialog" aria-label="Pocket mode">
+  <div class="pk-title">🔒 Pocket mode</div>
+  <div id="pocket-count">0</div>
+  <div class="pk-sub">steps this pocket walk · <span id="pocket-time">0:00</span></div>
+  <div id="pocket-note"></div>
+  <div class="pk-sub">Taps are ignored while locked.<br>Press and hold the button to unlock.</div>
+  <div id="pocket-hold" role="button" aria-label="Hold to unlock"><div class="pk-fill"></div><span>Hold to unlock</span></div>
+</div>
+<div id="wback-modal" role="dialog" aria-label="While you were away">
+  <div id="wback-card">
+    <div class="wb-ic">🐾</div>
+    <div class="wb-title">While you were away</div>
+    <div class="wb-big" id="wback-big">+0</div>
+    <div class="wb-line" id="wback-lines"></div>
+    <button id="wback-ok">Woof! 🐾</button>
+  </div>
+</div>
+<div id="sg-modal" role="dialog" aria-label="Pick sunglasses">
+  <div id="sg-card">
+    <button class="close-btn" id="sg-close" aria-label="Close">✕</button>
+    <div class="sg-title">🕶️ Pick sunglasses</div>
+    <div id="sg-grid"></div>
+    <button id="sg-off">Take them off</button>
+  </div>
+</div>
+<button id="home-paw-btn" title="Back to the puppy">🐾<span class="hpb-label">HOME</span></button>
+<button id="weather-report-btn" title="Tap to report the weather">
+  <span class="wr-icon">🌡️</span>
+  <span class="wr-chip-text">
+    <span class="wr-chip-label">Feels like</span>
+    <span class="wr-chip-value">Report</span>
+  </span>
+</button>
+<div id="weather-report-popup">
+  <div class="wr-title">How does it feel outside?</div>
+  <div class="wr-grid">
+    <div class="wr-opt" data-level="clear" title="Clear">☀️</div>
+    <div class="wr-opt" data-level="hot" title="Hot">🥵</div>
+    <div class="wr-opt" data-level="extreme" title="Extreme heat">🔥</div>
+    <div class="wr-opt" data-level="cloudy" title="Cloudy">☁️</div>
+    <div class="wr-opt" data-level="rain" title="Rain">🌧️</div>
+    <div class="wr-opt" data-level="storm" title="Storm">⛈️</div>
+    <div class="wr-opt" data-level="snow" title="Snow">❄️</div>
+    <div class="wr-opt" data-level="cold" title="Cold">🥶</div>
+  </div>
+</div>
 <div id="real-weather-chip" title="Real weather (Settings → Real sunrise &amp; weather)">
   <span class="rwc-icon" id="real-weather-icon">☀️</span>
   <span class="rwc-text">
@@ -2500,7 +2752,7 @@ body.night-mode #talk-screen-card::after{background:var(--night);}
     <div id="flight-view-toggle">
       <button class="fv-btn active" data-view="world">🗺️ World Map</button>
       <button class="fv-btn" data-view="ascent">🪜 Ascent Ladder</button>
-      <button class="fv-btn" data-view="scale">📐 Scale <span style="font-size:8px;font-weight:800;color:#3a2a00;background:#f5c518;border-radius:6px;padding:1px 4px;margin-left:3px;vertical-align:middle;">🚧</span></button>
+      <button class="fv-btn" data-view="scale">📐 Scale <span style="font-size:12px;font-weight:800;color:#3a2a00;background:#f5c518;border-radius:6px;padding:1px 4px;margin-left:3px;vertical-align:middle;">🚧</span></button>
       <button class="fv-btn" data-view="journey">🌌 Scale Journey</button>
     </div>
 
@@ -2579,21 +2831,21 @@ body.night-mode #talk-screen-card::after{background:var(--night);}
               <text x="150" y="88" text-anchor="middle" font-size="20">🏔️</text>
               <line x1="0" y1="190" x2="300" y2="190" stroke="rgba(143,216,255,.25)" stroke-width="1"/>
               <circle cx="70" cy="188" r="2.4" fill="#f2f4f8"/>
-              <text x="76" y="191" font-size="11.5" fill="rgba(242,244,248,.55)">you</text>
+              <text x="76" y="191" font-size="12" fill="rgba(242,244,248,.55)">you</text>
               <line x1="0" y1="120" x2="300" y2="120" stroke="rgba(143,216,255,.15)" stroke-width="1" stroke-dasharray="2,6"/>
               <text x="222" y="126" font-size="18">✈️</text>
-              <text x="245" y="106" font-size="11.5" fill="rgba(143,216,255,.55)">cruise altitude</text>
+              <text x="245" y="106" font-size="12" fill="rgba(143,216,255,.55)">cruise altitude</text>
               <path d="M20,55 Q150,20 280,55" fill="none" stroke="rgba(143,216,255,.2)" stroke-width="1" stroke-dasharray="3,7"/>
-              <text x="150" y="42" text-anchor="middle" font-size="11.5" fill="rgba(143,216,255,.55)">Kármán line — 100 km</text>
+              <text x="150" y="42" text-anchor="middle" font-size="12" fill="rgba(143,216,255,.55)">Kármán line — 100 km</text>
               <text x="150" y="27" text-anchor="middle" font-size="17">🛰️</text>
-              <text x="150" y="12" text-anchor="middle" font-size="11.5" fill="rgba(245,197,107,.8)">ISS — ~408 km</text>
+              <text x="150" y="12" text-anchor="middle" font-size="12" fill="rgba(245,197,107,.8)">ISS — ~408 km</text>
             </svg>
           </div>
           <div class="sj-stage-text">
             <div class="sj-eyebrow">Stage 1 · Near Earth</div>
             <div class="sj-stage-title">Where you're standing — and just above it</div>
             <div class="sj-stage-number sj-mono">8.8 km (Everest) → 408 km (ISS)</div>
-            <div class="sj-stage-fact">Earth is 12,742 km across — even Everest, the tallest point on the planet, is a scratch on the surface. Keep going up past cruise altitude and the Kármán line (100 km, the recognized edge of space) and you'll reach the ISS — the farthest most humans have ever actually been.</div>
+            <div class="sj-stage-fact">Earth is 12,742 km wide, so even Everest is just a scratch on its surface. Go up past the Kármán line (100 km, the edge of space) and you reach the ISS, the farthest most humans have been.</div>
           </div>
         </section>
 
@@ -2605,9 +2857,9 @@ body.night-mode #talk-screen-card::after{background:var(--night);}
               <circle cx="60" cy="120" r="16" fill="#3a7bd5"/>
               <circle cx="60" cy="120" r="16" fill="none" stroke="rgba(58,123,213,.4)" stroke-width="6"/>
               <circle cx="240" cy="120" r="4.4" fill="#c9d6ea"/>
-              <text x="60" y="150" text-anchor="middle" font-size="10.5" fill="rgba(255,255,255,.5)">Earth</text>
-              <text x="240" y="150" text-anchor="middle" font-size="10.5" fill="rgba(255,255,255,.5)">Moon</text>
-              <text x="150" y="105" text-anchor="middle" font-size="10.5" fill="rgba(255,255,255,.4)">384,400 km</text>
+              <text x="60" y="150" text-anchor="middle" font-size="12" fill="rgba(255,255,255,.5)">Earth</text>
+              <text x="240" y="150" text-anchor="middle" font-size="12" fill="rgba(255,255,255,.5)">Moon</text>
+              <text x="150" y="105" text-anchor="middle" font-size="12" fill="rgba(255,255,255,.4)">384,400 km</text>
             </svg>
           </div>
           <div class="sj-stage-text">
@@ -2624,17 +2876,17 @@ body.night-mode #talk-screen-card::after{background:var(--night);}
             <svg viewBox="0 0 300 220">
               <text x="150" y="129" text-anchor="middle" font-size="22">☀️</text>
               <circle cx="150" cy="120" r="34" fill="none" stroke="rgba(255,255,255,.14)" stroke-width="1"/>
-              <text x="184" y="125" text-anchor="middle" font-size="11">🌍</text>
+              <text x="184" y="125" text-anchor="middle" font-size="12">🌍</text>
               <circle cx="150" cy="120" r="58" fill="none" stroke="rgba(255,255,255,.1)" stroke-width="1"/>
               <circle cx="150" cy="120" r="86" fill="none" stroke="rgba(255,255,255,.08)" stroke-width="1"/>
               <circle cx="236" cy="120" r="4" fill="#cc9966"/>
               <circle cx="150" cy="34" r="1.6" fill="#ddcc88"/>
               <g>
                 <text x="272" y="153" text-anchor="middle" font-size="13">🛰️</text>
-                <text x="272" y="168" text-anchor="middle" font-size="11" fill="rgba(143,216,255,.75)">Voyager 1</text>
-                <text x="272" y="178" text-anchor="middle" font-size="10.5" fill="rgba(143,216,255,.5)">~172 AU out</text>
+                <text x="272" y="168" text-anchor="middle" font-size="12" fill="rgba(143,216,255,.75)">Voyager 1</text>
+                <text x="272" y="178" text-anchor="middle" font-size="12" fill="rgba(143,216,255,.5)">~172 AU out</text>
               </g>
-              <text x="184" y="108" text-anchor="middle" font-size="11" fill="rgba(58,123,213,.85)">Earth</text>
+              <text x="184" y="108" text-anchor="middle" font-size="12" fill="rgba(58,123,213,.85)">Earth</text>
             </svg>
           </div>
           <div class="sj-stage-text">
@@ -2653,17 +2905,17 @@ body.night-mode #talk-screen-card::after{background:var(--night);}
               <circle cx="154" cy="182" r="1.6" fill="#8fd8ff"/>
               <text x="150" y="204" text-anchor="middle" font-size="12" fill="rgba(255,255,255,.6)">Sun + entire solar system</text>
               <circle cx="150" cy="150" r="80" fill="none" stroke="rgba(159,180,216,.35)" stroke-width="1" stroke-dasharray="2,5"/>
-              <text x="150" y="66" text-anchor="middle" font-size="11.5" fill="rgba(159,180,216,.8)">Oort Cloud — inner edge, ~2,000 AU</text>
+              <text x="150" y="66" text-anchor="middle" font-size="12" fill="rgba(159,180,216,.8)">Oort Cloud — inner edge, ~2,000 AU</text>
               <path d="M146,30 L150,20 L154,30" fill="none" stroke="rgba(159,180,216,.65)" stroke-width="1.2"/>
               <line x1="150" y1="42" x2="150" y2="30" stroke="rgba(159,180,216,.5)" stroke-width="1" stroke-dasharray="2,4"/>
-              <text x="150" y="16" text-anchor="middle" font-size="11" fill="rgba(159,180,216,.65)">keeps going to ~100,000 AU — off this screen</text>
+              <text x="150" y="16" text-anchor="middle" font-size="12" fill="rgba(159,180,216,.65)">keeps going to ~100,000 AU — off this screen</text>
             </svg>
           </div>
           <div class="sj-stage-text">
             <div class="sj-eyebrow">Stage 4 · The Oort Cloud</div>
             <div class="sj-stage-title">Meeting the Oort Cloud</div>
             <div class="sj-stage-number sj-mono">~2,000 → 100,000+ AU (theorized)</div>
-            <div class="sj-stage-fact">The Oort Cloud is a vast, theorized shell of icy debris — never directly observed — that marks the true edge of the Sun's gravity. Voyager 1 won't reach its inner edge for about 300 years, and would take tens of thousands more to cross all the way through it.</div>
+            <div class="sj-stage-fact">The Oort Cloud is a theorized shell of icy debris at the edge of the Sun's gravity. No one has seen it directly. Voyager 1 needs about 300 years to reach its inner edge, and tens of thousands more to cross it.</div>
           </div>
         </section>
 
@@ -2672,11 +2924,11 @@ body.night-mode #talk-screen-card::after{background:var(--night);}
           <div class="sj-stage-illus">
             <svg viewBox="0 0 300 220">
               <text x="150" y="158" text-anchor="middle" font-size="17">☀️</text>
-              <text x="150" y="168" text-anchor="middle" font-size="11.5" fill="rgba(245,197,107,.7)">our Sun</text>
+              <text x="150" y="168" text-anchor="middle" font-size="12" fill="rgba(245,197,107,.7)">our Sun</text>
               <text x="235" y="76" text-anchor="middle" font-size="14">⭐</text>
-              <text x="235" y="58" text-anchor="middle" font-size="11.5" fill="rgba(255,183,168,.8)">Proxima Centauri</text>
+              <text x="235" y="58" text-anchor="middle" font-size="12" fill="rgba(255,183,168,.8)">Proxima Centauri</text>
               <line x1="150" y1="150" x2="235" y2="70" stroke="rgba(255,255,255,.14)" stroke-width="1" stroke-dasharray="2,6"/>
-              <text x="192" y="105" text-anchor="middle" font-size="11" fill="rgba(255,255,255,.45)">4.24 light-years</text>
+              <text x="192" y="105" text-anchor="middle" font-size="12" fill="rgba(255,255,255,.45)">4.24 light-years</text>
               <circle cx="46" cy="45" r="1" fill="#fff" opacity=".5"/><circle cx="90" cy="190" r="1" fill="#fff" opacity=".4"/>
               <circle cx="260" cy="180" r="1" fill="#fff" opacity=".5"/><circle cx="30" cy="130" r="1" fill="#fff" opacity=".4"/>
             </svg>
@@ -2701,7 +2953,7 @@ body.night-mode #talk-screen-card::after{background:var(--night);}
                 <circle r="9" fill="#efe0c8"/>
                 <text x="42" y="-10" text-anchor="middle" font-size="14">☀️</text>
               </g>
-              <text x="192" y="98" font-size="11" fill="rgba(245,197,107,.8)">our Sun's location</text>
+              <text x="192" y="98" font-size="12" fill="rgba(245,197,107,.8)">our Sun's location</text>
             </svg>
           </div>
           <div class="sj-stage-text">
@@ -2717,11 +2969,11 @@ body.night-mode #talk-screen-card::after{background:var(--night);}
           <div class="sj-stage-illus">
             <svg viewBox="0 0 300 220">
               <circle cx="150" cy="115" r="80" fill="none" stroke="rgba(201,166,232,.35)" stroke-width="1"/>
-              <text x="150" y="26" text-anchor="middle" font-size="11.5" fill="rgba(201,166,232,.7)">Local Group — ~10 million light-years across</text>
+              <text x="150" y="26" text-anchor="middle" font-size="12" fill="rgba(201,166,232,.7)">Local Group — ~10 million light-years across</text>
               <circle cx="130" cy="120" r="4" fill="#b9a4e8"/>
-              <text x="130" y="138" text-anchor="middle" font-size="11" fill="rgba(255,255,255,.6)">Milky Way (home)</text>
+              <text x="130" y="138" text-anchor="middle" font-size="12" fill="rgba(255,255,255,.6)">Milky Way (home)</text>
               <circle cx="172" cy="98" r="4.6" fill="#efe0c8"/>
-              <text x="172" y="90" text-anchor="middle" font-size="11" fill="rgba(255,255,255,.6)">Andromeda</text>
+              <text x="172" y="90" text-anchor="middle" font-size="12" fill="rgba(255,255,255,.6)">Andromeda</text>
               <line x1="134" y1="118" x2="168" y2="100" stroke="rgba(255,255,255,.18)" stroke-width="1" stroke-dasharray="2,4"/>
               <circle cx="95" cy="150" r="1.8" fill="#8a8ac0" opacity=".6"/>
               <circle cx="210" cy="150" r="1.6" fill="#8a8ac0" opacity=".5"/>
@@ -2732,7 +2984,7 @@ body.night-mode #talk-screen-card::after{background:var(--night);}
             <div class="sj-eyebrow">Stage 7 · The Local Group</div>
             <div class="sj-stage-title">Not alone out here</div>
             <div class="sj-stage-number sj-mono">~10 million light-years across</div>
-            <div class="sj-stage-fact">The Milky Way shares this neighborhood with Andromeda — our closest large galactic neighbor — plus dozens of smaller galaxies. Andromeda and the Milky Way are slowly falling toward each other, on a collision course roughly 4.5 billion years from now.</div>
+            <div class="sj-stage-fact">The Milky Way shares its neighborhood with Andromeda, our closest large galaxy, and dozens of smaller ones. Andromeda and the Milky Way are slowly moving toward each other and will collide in about 4.5 billion years.</div>
           </div>
         </section>
 
@@ -2741,9 +2993,9 @@ body.night-mode #talk-screen-card::after{background:var(--night);}
           <div class="sj-stage-illus">
             <svg viewBox="0 0 300 220">
               <circle cx="150" cy="115" r="95" fill="none" stroke="rgba(255,158,207,.25)" stroke-width="1"/>
-              <text x="150" y="16" text-anchor="middle" font-size="11.5" fill="rgba(255,158,207,.65)">observable universe — ~93 billion ly across</text>
+              <text x="150" y="16" text-anchor="middle" font-size="12" fill="rgba(255,158,207,.65)">observable universe — ~93 billion ly across</text>
               <circle cx="150" cy="115" r="20" fill="none" stroke="rgba(201,166,232,.4)" stroke-width="1"/>
-              <text x="150" y="140" text-anchor="middle" font-size="10.5" fill="rgba(201,166,232,.7)">Local Group</text>
+              <text x="150" y="140" text-anchor="middle" font-size="12" fill="rgba(201,166,232,.7)">Local Group</text>
               <circle cx="150" cy="115" r="2.4" fill="#b9a4e8"/>
               <circle cx="60" cy="60" r="1" fill="#fff" opacity=".4"/><circle cx="240" cy="70" r="1" fill="#fff" opacity=".4"/>
               <circle cx="80" cy="170" r="1" fill="#fff" opacity=".4"/><circle cx="220" cy="170" r="1" fill="#fff" opacity=".4"/>
@@ -2832,7 +3084,7 @@ body.night-mode #talk-screen-card::after{background:var(--night);}
 
   <div id="panel-home">
     <div class="panel-header"><h2>🛋️ Owner's Room</h2><button class="close-btn home-btn" onclick="goHome()" title="Back to main screen">🐾</button><button class="close-btn" id="room1-info-btn" title="What is this room?" style="margin-right:6px;font-size:var(--fs-md);">ℹ️</button><button class="close-btn" id="close-panel-home">✕</button></div>
-    <div id="room1-info-text" style="display:none;margin:-6px 20px 12px;font-size:var(--fs-sm);line-height:1.5;color:var(--txt-m);background:rgba(0,0,0,0.04);border-radius:10px;padding:9px 12px;">This is <b>your</b> room — your bed, your desk, your books, your plants. Puppy wanders in here sometimes, curious about your things, and settles differently depending on whether you're home, out, or working at your desk. Every treasure puppy digs up on your walks ends up on the shelf here too. 🐾</div>
+    <div id="room1-info-text" style="display:none;margin:-6px 20px 12px;font-size:var(--fs-sm);line-height:1.5;color:var(--txt-m);background:rgba(0,0,0,0.04);border-radius:10px;padding:9px 12px;">This is <b>your</b> room: your bed, desk, books and plants. Puppy wanders in to look around and settles differently depending on whether you're home, out or at your desk. Treasures it digs up on walks end up on the shelf here. 🐾</div>
     <div id="home-room-scene">
       <div id="home-scene-stage">
         <svg viewBox="0 0 400 150" xmlns="http://www.w3.org/2000/svg">
@@ -2892,7 +3144,7 @@ body.night-mode #talk-screen-card::after{background:var(--night);}
             <path d="M332,98 L332,14 L374,20 L374,92 Z" fill="#8a6a48" stroke="#5a4a38" stroke-width="1"/>
             <circle cx="367" cy="58" r="1.8" fill="#e8c468"/>
             <text x="359" y="58" font-size="15" text-anchor="middle" opacity="0.55">🐾</text>
-            <text x="359" y="108" font-size="8.5" text-anchor="middle" fill="#e8e6e0" font-weight="700">Puppy's Room →</text>
+            <text x="359" y="108" font-size="12" text-anchor="middle" fill="#e8e6e0" font-weight="700">Puppy's Room →</text>
           </g>
         </svg>
         <div id="home-bubble"></div>
@@ -2942,10 +3194,10 @@ body.night-mode #talk-screen-card::after{background:var(--night);}
         <circle cx="160" cy="160" r="78" fill="none" stroke="#5aa0d0" stroke-width="1.5" opacity="0.7" class="sky-hit" data-key="milkyway"/>
         <circle cx="160" cy="160" r="40" fill="none" stroke="#ffd76a" stroke-width="1.5" opacity="0.85" class="sky-hit" data-key="solarsystem"/>
         <circle cx="160" cy="160" r="5" fill="#ffd76a" class="sky-hit" data-key="solarsystem"/>
-        <text x="160" y="10" text-anchor="middle" font-size="10" fill="rgba(255,255,255,0.6)" font-weight="700" class="sky-hit" data-key="universe">Observable universe — ~93 billion ly across</text>
-        <text x="160" y="48" text-anchor="middle" font-size="10" fill="rgba(255,255,255,0.7)" font-weight="700" class="sky-hit" data-key="localgroup">Local Group — ~10 million ly</text>
-        <text x="160" y="86" text-anchor="middle" font-size="10" fill="rgba(255,255,255,0.8)" font-weight="700" class="sky-hit" data-key="milkyway">Milky Way — ~100,000 ly</text>
-        <text x="160" y="128" text-anchor="middle" font-size="10" fill="#ffe9a8" font-weight="700" class="sky-hit" data-key="solarsystem">Solar System</text>
+        <text x="160" y="10" text-anchor="middle" font-size="12" fill="rgba(255,255,255,0.6)" font-weight="700" class="sky-hit" data-key="universe">Observable universe — ~93 billion ly across</text>
+        <text x="160" y="48" text-anchor="middle" font-size="12" fill="rgba(255,255,255,0.7)" font-weight="700" class="sky-hit" data-key="localgroup">Local Group — ~10 million ly</text>
+        <text x="160" y="86" text-anchor="middle" font-size="12" fill="rgba(255,255,255,0.8)" font-weight="700" class="sky-hit" data-key="milkyway">Milky Way — ~100,000 ly</text>
+        <text x="160" y="128" text-anchor="middle" font-size="12" fill="#ffe9a8" font-weight="700" class="sky-hit" data-key="solarsystem">Solar System</text>
         <text x="160" y="164" text-anchor="middle" font-size="16" class="sky-hit" data-key="solarsystem">🐾</text>
       </svg>
       <div id="biggalaxy-info-card" style="background:rgba(255,255,255,0.08);border:1px solid rgba(255,255,255,0.15);border-radius:14px;padding:14px;font-size:var(--fs-sm);line-height:1.55;color:#fff;min-height:64px;">
@@ -2962,7 +3214,7 @@ body.night-mode #talk-screen-card::after{background:var(--night);}
   <div id="panel-telescope">
     <div class="panel-header"><h2>🔭 Observatory</h2><button class="close-btn home-btn" onclick="goHome()" title="Back to main screen">🐾</button><button class="close-btn" id="close-panel-telescope">✕</button></div>
     <div class="era-nav"><button class="era-chip" data-goto="story">🌍 Story of Earth</button><button class="era-chip" data-goto="earth">🏺 Ancient Worlds</button><button class="era-chip" data-goto="flight">✈️ Modern Earth</button><button class="era-chip" data-goto="space">🚀 Space</button><button class="era-chip" data-goto="galaxy">🌌 Beyond</button><button class="era-chip active" data-goto="telescope">🔭 Observatory</button></div>
-    <div style="padding:0 16px 8px;font-size:var(--fs-sm);color:rgba(255,255,255,0.55);line-height:1.5;flex-shrink:0;">This is real, not made up — pick what you're looking through, and see what you'd actually be able to see. Exact positions change night to night, so for tonight's real sky, a free app like Stellarium or Star Walk will show exactly what's up from where you are. Fact-checked July 2026.</div>
+    <div style="padding:0 16px 8px;font-size:var(--fs-sm);color:rgba(255,255,255,0.55);line-height:1.5;flex-shrink:0;">Pick what you're looking through to see what's really visible. Positions change nightly, so for tonight's sky use a free app like Stellarium or Star Walk. Fact-checked July 2026.</div>
     <div id="telescope-tier-row" style="display:flex;gap:6px;padding:6px 16px 4px;flex-wrap:wrap;flex-shrink:0;">
       <button class="telescope-tier-chip active" data-tier="naked">👁️ Naked Eye</button>
       <button class="telescope-tier-chip" data-tier="binoc">🔭 Binoculars</button>
@@ -3026,7 +3278,7 @@ body.night-mode #talk-screen-card::after{background:var(--night);}
         <path d="M338,166 L338,26 L379,34 L379,158 Z" fill="#8a5a34" stroke="#5a3820" stroke-width="1.2"/>
         <circle cx="371" cy="96" r="2.2" fill="#e8c468"/>
         <text x="362" y="98" font-size="20" text-anchor="middle" opacity="0.55">🛋️</text>
-        <text x="362" y="10" font-size="10" text-anchor="middle" fill="#e8e6e0" font-weight="700">Owner's Room →</text>
+        <text x="362" y="10" font-size="12" text-anchor="middle" fill="#e8e6e0" font-weight="700">Owner's Room →</text>
       </g>
     </svg>
   </div>
@@ -3154,12 +3406,12 @@ body.night-mode #talk-screen-card::after{background:var(--night);}
         <circle cx="115" cy="165" r="1.8" fill="#a06030" opacity="0.9"/>
         <circle cx="121" cy="164" r="1.8" fill="#a06030" opacity="0.9"/>
         <path d="M101,164 Q118,173 135,164" fill="#b09060" stroke="#8a7048" stroke-width="1"/>
-        <text x="118" y="179" text-anchor="middle" font-size="7" fill="rgba(255,255,255,0.4)" font-style="italic">food</text>
+        <text x="118" y="179" text-anchor="middle" font-size="12" fill="rgba(255,255,255,0.4)" font-style="italic">food</text>
         <ellipse cx="152" cy="164" rx="17" ry="6.5" fill="#c8d8e8" stroke="#8a9aac" stroke-width="1.5"/>
         <ellipse cx="152" cy="163" rx="13" ry="5" fill="#5ab8e8" opacity="0.7"/>
         <ellipse cx="148" cy="162" rx="4" ry="1.5" fill="#fff" opacity="0.35"/>
         <path d="M135,164 Q152,173 169,164" fill="#b0c8d8" stroke="#8a9aac" stroke-width="1"/>
-        <text x="152" y="179" text-anchor="middle" font-size="7" fill="rgba(255,255,255,0.4)" font-style="italic">water</text>
+        <text x="152" y="179" text-anchor="middle" font-size="12" fill="rgba(255,255,255,0.4)" font-style="italic">water</text>
       </g>
     </svg>
     <div id="house-puppy-wrap"></div>
@@ -3223,11 +3475,11 @@ body.night-mode #talk-screen-card::after{background:var(--night);}
       <rect y="160" width="400" height="50" fill="#8b5e9e"/>
       <rect y="155" width="400" height="8" fill="#6a3d7a"/>
       <!-- wallpaper hearts -->
-      <text x="28"  y="36"  font-size="11" opacity="0.25">♥</text><text x="90"  y="22"  font-size="9"  opacity="0.2">♥</text>
-      <text x="155" y="40"  font-size="12" opacity="0.22">♥</text><text x="220" y="18"  font-size="8"  opacity="0.18">♥</text>
-      <text x="270" y="38"  font-size="11" opacity="0.24">♥</text><text x="340" y="24"  font-size="9"  opacity="0.2">♥</text>
-      <text x="50"  y="90"  font-size="10" opacity="0.18">♥</text><text x="195" y="85"  font-size="8"  opacity="0.15">♥</text>
-      <text x="310" y="95"  font-size="11" opacity="0.18">♥</text>
+      <text x="28"  y="36"  font-size="12" opacity="0.25">♥</text><text x="90"  y="22"  font-size="12"  opacity="0.2">♥</text>
+      <text x="155" y="40"  font-size="12" opacity="0.22">♥</text><text x="220" y="18"  font-size="12"  opacity="0.18">♥</text>
+      <text x="270" y="38"  font-size="12" opacity="0.24">♥</text><text x="340" y="24"  font-size="12"  opacity="0.2">♥</text>
+      <text x="50"  y="90"  font-size="12" opacity="0.18">♥</text><text x="195" y="85"  font-size="12"  opacity="0.15">♥</text>
+      <text x="310" y="95"  font-size="12" opacity="0.18">♥</text>
       <!-- window -->
       <rect x="285" y="12" width="100" height="82" rx="6" fill="#b8dcf0" stroke="#7a4a8a" stroke-width="2"/>
       <line x1="335" y1="12" x2="335" y2="94" stroke="#7a4a8a" stroke-width="1.5"/>
@@ -3283,10 +3535,10 @@ body.night-mode #talk-screen-card::after{background:var(--night);}
         <rect x="61" y="90" width="38" height="9" rx="4.5" fill="#9060c0"/>
         <ellipse cx="80" cy="104" rx="13" ry="8" fill="#F5C842"/>
         <ellipse cx="80" cy="104" rx="11" ry="6.5" fill="#F8D84A"/>
-        <text style="font-size:9px;font-weight:800;fill:#5a2870;font-family:inherit;" x="80" y="107" text-anchor="middle">Maple</text>
+        <text style="font-size:12px;font-weight:800;fill:#5a2870;font-family:inherit;" x="80" y="107" text-anchor="middle">Maple</text>
         <circle cx="80" cy="99" r="2.5" fill="#7040a0"/>
       </svg>
-      <div style="font-size:8px;font-weight:700;color:#7a3890;margin-top:2px;white-space:nowrap;">🍼 still a baby — no walks yet</div>
+      <div style="font-size:12px;font-weight:700;color:#7a3890;margin-top:2px;white-space:nowrap;">🍼 still a baby — no walks yet</div>
     </div>
     <!-- Your puppy wrap — main sprite moves here on enter -->
     <div id="pr-your-puppy-wrap" style="position:absolute;bottom:22%;left:26%;transform:translateX(-50%);text-align:center;z-index:5;display:none;">
@@ -3294,7 +3546,7 @@ body.night-mode #talk-screen-card::after{background:var(--night);}
       <!-- puppy sprite injected here by JS, scaled up in bringPuppyIn() so
            it reads larger than Maple — this pup is already walk-out age. -->
       <div id="pr-your-name" style="font-size:var(--fs-2xs);font-weight:800;color:#3a2410;letter-spacing:0.5px;margin-top:2px;"></div>
-      <div style="font-size:8px;font-weight:700;color:#8a5a20;margin-top:1px;white-space:nowrap;">🎒 walk-ready</div>
+      <div style="font-size:12px;font-weight:700;color:#8a5a20;margin-top:1px;white-space:nowrap;">🎒 walk-ready</div>
     </div>
   </div>
   <!-- Bottom panel -->
@@ -3362,6 +3614,22 @@ body.night-mode #talk-screen-card::after{background:var(--night);}
         <ellipse cx="62" cy="147" rx="17" ry="6.5" fill="#6b4a2e" stroke="#4a3320" stroke-width="1"/>
         <text id="garden-plot-1-emoji" x="62" y="141" font-size="15" text-anchor="middle"></text>
       </g>
+      <g class="garden-plot" id="garden-plot-2" data-idx="2" style="cursor:pointer;">
+        <ellipse cx="98" cy="147" rx="17" ry="6.5" fill="#6b4a2e" stroke="#4a3320" stroke-width="1"/>
+        <text id="garden-plot-2-emoji" x="98" y="141" font-size="15" text-anchor="middle"></text>
+      </g>
+      <g class="garden-plot" id="garden-plot-3" data-idx="3" style="cursor:pointer;">
+        <ellipse cx="134" cy="147" rx="17" ry="6.5" fill="#6b4a2e" stroke="#4a3320" stroke-width="1"/>
+        <text id="garden-plot-3-emoji" x="134" y="141" font-size="15" text-anchor="middle"></text>
+      </g>
+      <g class="garden-plot" id="garden-plot-4" data-idx="4" style="cursor:pointer;">
+        <ellipse cx="170" cy="147" rx="17" ry="6.5" fill="#6b4a2e" stroke="#4a3320" stroke-width="1"/>
+        <text id="garden-plot-4-emoji" x="170" y="141" font-size="15" text-anchor="middle"></text>
+      </g>
+      <g class="garden-plot" id="garden-plot-5" data-idx="5" style="cursor:pointer;">
+        <ellipse cx="206" cy="147" rx="17" ry="6.5" fill="#6b4a2e" stroke="#4a3320" stroke-width="1"/>
+        <text id="garden-plot-5-emoji" x="206" y="141" font-size="15" text-anchor="middle"></text>
+      </g>
       <ellipse cx="130" cy="120" rx="55" ry="9" fill="#5a9a3e" opacity="0.5"/>
       <circle id="backyard-ball" cx="130" cy="112" r="11" fill="#e8503a"/>
       <path d="M120,112 Q130,105 140,112 M130,101 L130,123" stroke="#fff" stroke-width="1.5" fill="none"/>
@@ -3370,13 +3638,15 @@ body.night-mode #talk-screen-card::after{background:var(--night);}
     </svg>
     <div id="backyard-visitor"></div>
     <div id="backyard-puppy-wrap"></div>
+    <div id="backyard-frisbee"><span id="backyard-frisbee-spin">🥏</span></div>
     <div id="backyard-bubble"></div>
     <button id="backyard-exit-btn" onclick="exitBackyard()">🚪 Go inside</button>
     <div id="backyard-info-badge">🌳 Backyard<button id="backyard-info-btn" title="What is this?">ℹ️</button></div>
   </div>
   <div class="manual-body" style="padding:16px 20px calc(var(--sab) + 20px);">
-    <p style="margin-bottom:10px;">A patch of grass just outside the house — puppy can chase the ball or sniff around here without a full walk.</p>
-    <button onclick="backyardInteract()" class="house-btn" style="width:100%;background:var(--accent);color:#fff;border:none;">🎾 Throw the ball</button>
+    <p style="margin-bottom:10px;">A patch of grass just outside the house — puppy can chase the ball, catch the frisbee, or sniff around here without a full walk.</p>
+    <button onclick="backyardInteract()" class="house-btn" style="width:100%;background:var(--accent);color:#fff;border:none;margin-bottom:8px;">🎾 Throw the ball</button>
+    <button onclick="backyardThrowFrisbee()" class="house-btn" style="width:100%;background:#8a4fd8;color:#fff;border:none;">🥏 Throw the frisbee</button>
   </div>
 </div>
 
@@ -3496,8 +3766,9 @@ body.night-mode #talk-screen-card::after{background:var(--night);}
     <button class="close-btn" id="location-close-btn" title="Close" aria-label="Close" style="position:absolute;top:10px;right:10px;">✕</button>
     <div style="font-size:44px;margin-bottom:8px;">📍</div>
     <div class="subtitle">Real sunrise &amp; weather</div>
-    <div style="font-size:var(--fs-sm);color:var(--txt-m);margin-bottom:18px;">Off by default. If you turn it on, puppy uses your real local sunrise/sunset for day &amp; night, and today's actual weather — so puppy might suggest waiting out the rain, or heading out while it's clear. Your location is never saved to disk, only a yes/no flag.</div>
+    <div style="font-size:var(--fs-sm);color:var(--txt-m);margin-bottom:18px;">Off by default. When on, puppy follows your local sunrise and sunset and today's weather, so it may suggest waiting out rain. Your location is never saved, only an on/off flag.</div>
     <div id="location-status" style="font-size:var(--fs-sm);font-weight:700;color:var(--txt-m);background:rgba(0,0,0,0.04);border-radius:12px;padding:10px 12px;margin-bottom:16px;">Off — using fixed 8pm–6am day/night</div>
+    <div id="location-msg" role="status" style="display:none;font-size:var(--fs-sm);line-height:1.5;color:var(--txt);background:rgba(184,134,59,0.14);border:1px solid rgba(184,134,59,0.35);border-radius:12px;padding:10px 12px;margin:-6px 0 14px;text-align:left;"></div>
     <div style="display:flex;gap:8px;">
       <button id="location-off-btn" class="segment-btn-lg">Turn off</button>
       <button id="location-on-btn" class="btn-primary-green">Turn on 📍</button>
@@ -3697,7 +3968,12 @@ window.addEventListener('DOMContentLoaded',function(){
         const sgChip=document.getElementById('acc-chip-sunglasses');
         const sgState=document.getElementById('acc-state-sunglasses');
         const sgOn=safeGet(()=>sunglassesOn,false);
-        if(sgChip&&sgState){ sgChip.classList.toggle('selected',sgOn); sgState.textContent=sgOn?'On':'Off'; }
+        if(sgChip&&sgState){
+          sgChip.classList.toggle('selected',sgOn);
+          const sgIcon=document.getElementById('acc-icon-sunglasses');
+          if(sgIcon)sgIcon.textContent=(sgOn&&window.sgStyleIcon)?window.sgStyleIcon():'😎';
+          sgState.textContent=sgOn?(window.sgStyleName?window.sgStyleName():'On'):(window.sgStyleCount?window.sgStyleCount()+' styles':'Off');
+        }
         const rcChip=document.getElementById('acc-chip-raincoat');
         const rcState=document.getElementById('acc-state-raincoat');
         const rcOn=safeGet(()=>raincoatOn,false);
@@ -3716,7 +3992,7 @@ window.addEventListener('DOMContentLoaded',function(){
       document.addEventListener('click',()=>accessoriesMenu.classList.remove('open'));
       accessoriesMenu.addEventListener('click',e=>e.stopPropagation());
       const sgChipBtn=document.getElementById('acc-chip-sunglasses');
-      if(sgChipBtn)sgChipBtn.addEventListener('click',()=>safeCall(()=>toggleSunglasses()));
+      if(sgChipBtn)sgChipBtn.addEventListener('click',()=>safeCall(()=>openSunglassesPicker()));
       const rcChipBtn=document.getElementById('acc-chip-raincoat');
       if(rcChipBtn)rcChipBtn.addEventListener('click',()=>safeCall(()=>toggleRaincoat()));
 
@@ -4514,12 +4790,12 @@ function drawHomeGlobe(){
       <stop offset="100%" stop-color="#0d1b2a"/>
     </linearGradient></defs>
     <circle cx="${cx}" cy="${cy}" r="${R}" fill="url(#globeGrad)" stroke="rgba(0,0,0,0.15)" stroke-width="1.5"/>
-    <text x="${cx}" y="${cy+R+14}" text-anchor="middle" font-size="8.5" fill="var(--txt-m)">☀️ sun side → · night side ←</text>`;
+    <text x="${cx}" y="${cy+R+14}" text-anchor="middle" font-size="12" fill="var(--txt-m)">☀️ sun side → · night side ←</text>`;
   markers.forEach(m=>{
     const theta=(angleFromSun(m.lon)/180)*Math.PI;
     const x=cx+R*0.82*Math.sin(theta),y=cy-R*0.82*Math.cos(theta);
     svg+=`<circle cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="9" fill="#fff" stroke="${m.isHome?'#ff6b35':m.isYou?'#7EC8E3':'#333'}" stroke-width="2"/>
-      <text x="${x.toFixed(1)}" y="${(y+4).toFixed(1)}" text-anchor="middle" font-size="10">${m.icon}</text>`;
+      <text x="${x.toFixed(1)}" y="${(y+4).toFixed(1)}" text-anchor="middle" font-size="12">${m.icon}</text>`;
   });
   svg+='</svg>';
   wrap.innerHTML=`<div style="text-align:center;">${svg}${markers.length?'':'<div style="font-size:var(--fs-sm);color:var(--txt-m);margin-top:6px;">Add a home city or a friend to see the globe 🌍</div>'}</div>`;
@@ -4879,14 +5155,39 @@ function applyBackyardSeason(){
 // also shown on a small shelf in Puppy's Room, so there's a reason to peek
 // at both places. ═══
 const PLANT_TYPES=[
-  {id:'tomato',name:'Tomato',emoji:'🍅',category:'vegetable'},
-  {id:'carrot',name:'Carrot',emoji:'🥕',category:'vegetable'},
-  {id:'strawberry',name:'Strawberry',emoji:'🍓',category:'fruit'},
-  {id:'sunflower',name:'Sunflower',emoji:'🌻',category:'flower'},
+  {id:'tulip',name:'Tulip',emoji:'🌷',category:'flower',seasons:['spring']},
+  {id:'daisy',name:'Daisy',emoji:'🌼',category:'flower',seasons:['spring']},
+  {id:'carrot',name:'Carrot',emoji:'🥕',category:'vegetable',seasons:['spring']},
+  {id:'pea',name:'Pea',emoji:'🫛',category:'vegetable',seasons:['spring']},
+  {id:'strawberry',name:'Strawberry',emoji:'🍓',category:'fruit',seasons:['spring']},
+  {id:'lettuce',name:'Lettuce',emoji:'🥬',category:'vegetable',seasons:['spring']},
+  {id:'onion',name:'Onion',emoji:'🧅',category:'vegetable',seasons:['spring']},
+  {id:'garlic',name:'Garlic',emoji:'🧄',category:'vegetable',seasons:['spring']},
+  {id:'sunflower',name:'Sunflower',emoji:'🌻',category:'flower',seasons:['summer']},
+  {id:'marigold',name:'Marigold',emoji:'🏵️',category:'flower',seasons:['summer']},
+  {id:'tomato',name:'Tomato',emoji:'🍅',category:'vegetable',seasons:['summer']},
+  {id:'cucumber',name:'Cucumber',emoji:'🥒',category:'vegetable',seasons:['summer']},
+  {id:'corn',name:'Corn',emoji:'🌽',category:'vegetable',seasons:['summer']},
+  {id:'pepper',name:'Pepper',emoji:'🫑',category:'vegetable',seasons:['summer']},
+  {id:'watermelon',name:'Watermelon',emoji:'🍉',category:'fruit',seasons:['summer']},
+  {id:'eggplant',name:'Eggplant',emoji:'🍆',category:'vegetable',seasons:['summer']},
+  {id:'mum',name:'Chrysanthemum',emoji:'🏵️',category:'flower',seasons:['autumn']},
+  {id:'aster',name:'Aster',emoji:'🌸',category:'flower',seasons:['autumn']},
+  {id:'pumpkin',name:'Pumpkin',emoji:'🎃',category:'vegetable',seasons:['autumn']},
+  {id:'kale',name:'Kale',emoji:'🥬',category:'vegetable',seasons:['autumn']},
+  {id:'sweetpotato',name:'Sweet potato',emoji:'🍠',category:'vegetable',seasons:['autumn']},
+  {id:'mushroom',name:'Mushroom',emoji:'🍄',category:'vegetable',seasons:['autumn']},
+  {id:'chestnut',name:'Chestnut',emoji:'🌰',category:'vegetable',seasons:['autumn']},
+  {id:'apple',name:'Apple',emoji:'🍎',category:'fruit',seasons:['autumn']},
+  {id:'pansy',name:'Pansy',emoji:'🌸',category:'flower',seasons:['winter']},
+  {id:'wintergarlic',name:'Winter garlic',emoji:'🧄',category:'vegetable',seasons:['winter']},
+  {id:'wintergreens',name:'Winter greens',emoji:'🥬',category:'vegetable',seasons:['winter']},
 ];
+function seedPickerOptions(){ const s=getSeason(); return PLANT_TYPES.filter(p=>p.seasons.includes(s)); } // what grows now follows the real season
 const GARDEN_STAGE_DAYS={seed:0,sprout:1.5,growing:3.5,ready:6};
 const GARDEN_STAGE_EMOJI={seed:'🌰',sprout:'🌱',growing:'🌿'}; // 'ready' uses the plant's own emoji
-let gardenPlots=pwLoadJSON('pw_garden','null')||[null,null]; // [{plantId,plantedDate}|null, ...]
+let gardenPlots=pwLoadJSON('pw_garden','null')||[null,null,null,null,null,null];
+while(gardenPlots.length<6)gardenPlots.push(null); // older saves had 2 plots // [{plantId,plantedDate}|null, ...]
 let gardenHarvest=pwLoadJSON('pw_garden_harvest','{}'); // {tomato:2, carrot:1, ...}
 function saveGarden(){ localStorage.setItem('pw_garden',JSON.stringify(gardenPlots)); }
 function saveGardenHarvest(){ localStorage.setItem('pw_garden_harvest',JSON.stringify(gardenHarvest)); }
@@ -4932,7 +5233,7 @@ function harvestGardenPlot(idx){
 function openSeedPicker(idx){
   gardenPickerPlotIdx=idx;
   const list=document.getElementById('seed-picker-list');
-  list.innerHTML=PLANT_TYPES.map(p=>`<button class="house-btn" style="display:flex;align-items:center;gap:8px;justify-content:flex-start;" onclick="plantSeed(${idx},'${p.id}')"><span style="font-size:var(--fs-lg);">${p.emoji}</span> ${p.name}</button>`).join('');
+  list.innerHTML=seedPickerOptions().map(p=>`<button class="house-btn" style="display:flex;align-items:center;gap:8px;justify-content:flex-start;" onclick="plantSeed(${idx},'${p.id}')"><span style="font-size:var(--fs-lg);">${p.emoji}</span> ${p.name}</button>`).join('');
   document.getElementById('seed-picker-modal').style.display='flex';
 }
 let gardenPickerPlotIdx=null;
@@ -5150,7 +5451,11 @@ function setWeatherMood(mood){
   showBanner(reactions[idx]);
   if(weatherTapCount[mood]>=2&&currentPuppyState!=='sleepy'&&!isCyclingActive) setPuppyState('happy');
   if(mood==='hot') setTimeout(()=>{ if(!isCyclingActive&&currentPuppyState!=='sleepy') giveWater(); },1200);
-  if((mood==='hot'||mood==='nice')&&!sunglassesOn) setTimeout(()=>toggleSunglasses(),mood==='hot'?1600:600);
+  if((mood==='hot'||mood==='nice')&&!sunglassesOn) setTimeout(()=>{
+    toggleSunglasses();
+    // Until the style picker has been found once, point at it (tap the banner).
+    if(!sgSeen()) setTimeout(()=>showBannerAction('😎 Shades on! Tap here to pick a style',()=>openSunglassesPicker(),5000),2900);
+  },mood==='hot'?1600:600);
   if(mood==='rainy'&&!raincoatOn) setTimeout(()=>toggleRaincoat(),600);
   if(prevMood==='rainy'&&(mood==='nice'||mood==='cloudy')) maybeShowRainbow();
   applyPuppyRoomSeason(getSeason());
@@ -5208,6 +5513,8 @@ let realSunToday=null; // cached result for today, once location is granted
 // location is on; if the fetch fails (offline, blocked) the scene simply
 // stays weather-free — no error shown, since this is a pure bonus.
 let currentWeather=null; // {code, temp}
+var userWeatherLevel=null; // self-reported "feels like" (clear/hot/extreme/…), set by the Feels-like chip
+try{userWeatherLevel=localStorage.getItem('pw_user_weather');}catch(e){}
 function weatherCategory(code){
   if([0,1].includes(code)) return 'clear';
   if([2,3].includes(code)) return 'cloudy';
@@ -5296,9 +5603,29 @@ function clearWeather(){
 }
 setInterval(()=>{ if(GEO.granted) refreshWeatherFromLocation(); },30*60*1000); // refresh every 30 min while location is on
 
+let locationPending=false;
+function setLocationMsg(text,isError){
+  const m=document.getElementById('location-msg'); if(!m) return;
+  m.style.display=text?'block':'none';
+  m.textContent=text||'';
+  m.style.background=isError?'rgba(232,80,60,0.12)':'rgba(52,199,89,0.14)';
+  m.style.borderColor=isError?'rgba(232,80,60,0.35)':'rgba(52,199,89,0.35)';
+}
+// Only the button that makes sense right now is active: "Turn on" when off,
+// "Turn off" when on, and both locked while a location request is running.
+function updateLocationButtons(){
+  const on=document.getElementById('location-on-btn'), off=document.getElementById('location-off-btn');
+  if(!on||!off) return;
+  on.disabled=locationPending||GEO.granted;
+  off.disabled=locationPending||!GEO.granted;
+  on.style.opacity=on.disabled?'0.45':'1';
+  off.style.opacity=off.disabled?'0.45':'1';
+  on.textContent=locationPending?'Finding you… 📍':(GEO.granted?'On ✓':'Turn on 📍');
+}
 function refreshLocationStatus(){
   const statusEl=document.getElementById('location-status');
   if(!statusEl) return;
+  updateLocationButtons();
   let sunLine;
   if(GEO.granted&&realSunToday){
     if(realSunToday.polar==='day') sunLine='On — ☀️ polar day where you are, sun never sets';
@@ -5317,7 +5644,10 @@ function refreshLocationStatus(){
   }
 }
 async function enableLocation(silent){
-  if(!navigator.geolocation){ if(!silent) showBanner('Location not available on this device'); return; }
+  if(locationPending) return;
+  if(!navigator.geolocation){ setLocationMsg('Location is not available on this device. Use the weather picker below instead.',true); if(!silent) showBanner('Location not available on this device'); return; }
+  if(window.isSecureContext===false){ setLocationMsg('Location only works on a secure (https) page. Open the app from its https link, or use the weather picker below.',true); if(!silent) showBanner('Location needs a secure (https) page'); return; }
+  locationPending=true; if(!silent) setLocationMsg('Asking your device for your location… tap Allow if it asks.',false); updateLocationButtons();
   // Own fallback timer, separate from the {timeout:8000} option passed below.
   // That option only fires if the browser's geolocation implementation calls
   // back at all — but some sandboxed/embedded contexts (previews, WebViews
@@ -5329,14 +5659,16 @@ async function enableLocation(silent){
   const fallbackTimer=setTimeout(()=>{
     if(settled)return;
     settled=true;
-    GEO.granted=false;
+    GEO.granted=false; locationPending=false;
     localStorage.setItem('pw_location_enabled','0');
+    setLocationMsg("Couldn't get your location here. Try opening this in your regular browser, or use the weather picker below instead.",true);
     if(!silent) showBanner("📍 Couldn't get your location here — try opening this in your regular browser, or use the weather picker below instead");
     refreshLocationStatus();
   },9000);
   navigator.geolocation.getCurrentPosition(async pos=>{
     if(settled)return; settled=true; clearTimeout(fallbackTimer);
-    GEO.lat=pos.coords.latitude;GEO.lon=pos.coords.longitude;GEO.granted=true;
+    GEO.lat=pos.coords.latitude;GEO.lon=pos.coords.longitude;GEO.granted=true; locationPending=false;
+    setLocationMsg('Location is on ✓ Puppy now follows your local sunrise, sunset and weather.',false);
     localStorage.setItem('pw_location_enabled','1'); // only a yes/no flag — never the coordinates themselves
     realSunToday=getSunTimesLocal(GEO.lat,GEO.lon); // instant, offline-friendly estimate
     updateTimeOfDay();refreshLocationStatus();refreshWeatherFromLocation();
@@ -5349,13 +5681,18 @@ async function enableLocation(silent){
     }catch(e){}
   },err=>{
     if(settled)return; settled=true; clearTimeout(fallbackTimer);
-    GEO.granted=false;
+    GEO.granted=false; locationPending=false;
     localStorage.setItem('pw_location_enabled','0');
+    const why=err&&err.code===1?'Location permission was denied. On iPhone: Settings → Privacy & Security → Location Services → Safari Websites (or this app), then try again. Or use the weather picker below.'
+      :err&&err.code===3?'Timed out waiting for a location fix. Try again with a better signal, or use the weather picker below.'
+      :'Your device could not find its location. Try again, or use the weather picker below.';
+    setLocationMsg(why,true);
     if(!silent) showBanner('Location denied — using fixed 8pm–6am day/night');
     refreshLocationStatus();
   },{timeout:8000});
 }
 function disableLocation(){
+  setLocationMsg('Location is off. Puppy uses fixed 8pm–6am day and night.',false);
   GEO.granted=false;GEO.lat=null;GEO.lon=null;realSunToday=null;
   localStorage.setItem('pw_location_enabled','0');
   updateTimeOfDay();refreshLocationStatus();clearWeather();
@@ -5364,7 +5701,7 @@ function disableLocation(){
 }
 document.getElementById('smenu-location').addEventListener('click',()=>{
   settingsMenu.classList.remove('open');
-  refreshLocationStatus();
+  setLocationMsg('');refreshLocationStatus();
   document.getElementById('location-modal').style.display='flex';
 });
 document.getElementById('location-close-btn').addEventListener('click',()=>{document.getElementById('location-modal').style.display='none';});
@@ -5797,7 +6134,7 @@ function buildOrrery(){
   bodiesG.appendChild(sun);
   const sunLabel=document.createElementNS(svgNS,'text');
   sunLabel.setAttribute('x',sunCx);sunLabel.setAttribute('y',sunCy+22);
-  sunLabel.setAttribute('text-anchor','middle');sunLabel.setAttribute('font-size','8.5');
+  sunLabel.setAttribute('text-anchor','middle');sunLabel.setAttribute('font-size','12');
   sunLabel.setAttribute('font-weight','700');sunLabel.setAttribute('fill','rgba(255,215,106,0.7)');
   sunLabel.textContent='☀️ Sun';
   bodiesG.appendChild(sunLabel);
@@ -5875,7 +6212,7 @@ function buildOrrery(){
     const stepLabel=document.createElementNS(svgNS,'text');
     stepLabel.setAttribute('x',x.toFixed(1));stepLabel.setAttribute('y',stepY.toFixed(1));
     stepLabel.setAttribute('text-anchor','middle');
-    stepLabel.setAttribute('font-size','9.5');
+    stepLabel.setAttribute('font-size','12');
     stepLabel.setAttribute('fill','rgba(255,255,255,0.35)');
     stepLabel.textContent=wp.au===0?'home':(wp.au<0.01?wp.km.toLocaleString()+' km':wp.au.toLocaleString()+' AU');
     bodiesG.appendChild(stepLabel);
@@ -5919,7 +6256,7 @@ function buildOrrery(){
     bubbleG.appendChild(bName);
     const bDist=document.createElementNS(svgNS,'text');
     bDist.setAttribute('x',bubbleCx.toFixed(1));bDist.setAttribute('y',(bubbleRectY+28).toFixed(1));
-    bDist.setAttribute('text-anchor','middle');bDist.setAttribute('font-size','9.5');
+    bDist.setAttribute('text-anchor','middle');bDist.setAttribute('font-size','12');
     bDist.setAttribute('font-weight','600');bDist.setAttribute('fill','#6a5a30');
     bDist.textContent=distText;
     bubbleG.appendChild(bDist);
@@ -5932,7 +6269,7 @@ function buildOrrery(){
       bubbleG.appendChild(divider);
       const bTrivia=document.createElementNS(svgNS,'text');
       bTrivia.setAttribute('x',bubbleCx.toFixed(1));bTrivia.setAttribute('y',(bubbleRectY+46).toFixed(1));
-      bTrivia.setAttribute('text-anchor','middle');bTrivia.setAttribute('font-size','9.5');
+      bTrivia.setAttribute('text-anchor','middle');bTrivia.setAttribute('font-size','12');
       bTrivia.setAttribute('font-weight','500');bTrivia.setAttribute('fill','#3a2f1a');
       triviaLines.forEach((line,li)=>{
         const tspan=document.createElementNS(svgNS,'tspan');
@@ -5951,7 +6288,7 @@ function buildOrrery(){
       const hintY=labelY+side*13+(side===1?13:-2);
       const hint=document.createElementNS(svgNS,'text');
       hint.setAttribute('x',x.toFixed(1));hint.setAttribute('y',hintY.toFixed(1));
-      hint.setAttribute('text-anchor','middle');hint.setAttribute('font-size','8');
+      hint.setAttribute('text-anchor','middle');hint.setAttribute('font-size','12');
       hint.setAttribute('fill','rgba(255,215,106,0.55)');
       hint.textContent='ⓘ tap for trivia';
       bodiesG.appendChild(hint);
@@ -6011,13 +6348,13 @@ function buildOrrery(){
     hmG.appendChild(hmRect);
     const hmName=document.createElementNS(svgNS,'text');
     hmName.setAttribute('x',hmCx.toFixed(1));hmName.setAttribute('y',(hmRectY+15).toFixed(1));
-    hmName.setAttribute('text-anchor','middle');hmName.setAttribute('font-size','11.5');
+    hmName.setAttribute('text-anchor','middle');hmName.setAttribute('font-size','12');
     hmName.setAttribute('font-weight','800');hmName.setAttribute('fill','#0d3a5c');
     hmName.textContent='🌍➡️ '+hm.name;
     hmG.appendChild(hmName);
     const hmNote=document.createElementNS(svgNS,'text');
     hmNote.setAttribute('x',hmCx.toFixed(1));hmNote.setAttribute('y',(hmRectY+30).toFixed(1));
-    hmNote.setAttribute('text-anchor','middle');hmNote.setAttribute('font-size','9.5');
+    hmNote.setAttribute('text-anchor','middle');hmNote.setAttribute('font-size','12');
     hmNote.setAttribute('font-weight','500');hmNote.setAttribute('fill','#1a3a4a');
     hmLines.forEach((line,li)=>{
       const tspan=document.createElementNS(svgNS,'tspan');
@@ -6028,7 +6365,7 @@ function buildOrrery(){
     hmG.appendChild(hmNote);
     const hmDate=document.createElementNS(svgNS,'text');
     hmDate.setAttribute('x',hmCx.toFixed(1));hmDate.setAttribute('y',(hmRectY+hmH-6).toFixed(1));
-    hmDate.setAttribute('text-anchor','middle');hmDate.setAttribute('font-size','8');
+    hmDate.setAttribute('text-anchor','middle');hmDate.setAttribute('font-size','12');
     hmDate.setAttribute('font-weight','700');hmDate.setAttribute('fill','#5a7a8a');
     hmDate.textContent=(hm.since||'')+'  ·  checked '+HUMAN_REACH_DATA_DATE;
     hmG.appendChild(hmDate);
@@ -6181,7 +6518,7 @@ function buildParchmentMap(){
     const mtnLabel=document.createElementNS(svgNS,'text');
     mtnLabel.setAttribute('x',820);mtnLabel.setAttribute('y',195);
     mtnLabel.setAttribute('text-anchor','middle');mtnLabel.setAttribute('font-family','Georgia,serif');
-    mtnLabel.setAttribute('font-size','11');mtnLabel.setAttribute('font-style','italic');
+    mtnLabel.setAttribute('font-size','12');mtnLabel.setAttribute('font-style','italic');
     mtnLabel.setAttribute('fill','#5c4326');mtnLabel.setAttribute('opacity','0.55');
     mtnLabel.textContent='the great mountains';
     mtnG.appendChild(mtnLabel);
@@ -6209,7 +6546,7 @@ function buildParchmentMap(){
     const mtnLabel=document.createElementNS(svgNS,'text');
     mtnLabel.setAttribute('x',1300);mtnLabel.setAttribute('y',115);
     mtnLabel.setAttribute('text-anchor','middle');mtnLabel.setAttribute('font-family','Georgia,serif');
-    mtnLabel.setAttribute('font-size','11');mtnLabel.setAttribute('font-style','italic');
+    mtnLabel.setAttribute('font-size','12');mtnLabel.setAttribute('font-style','italic');
     mtnLabel.setAttribute('fill','#1e3a42');mtnLabel.setAttribute('opacity','0.5');
     mtnLabel.textContent='monsoon winds carry ships for months';
     mtnG.appendChild(mtnLabel);
@@ -6252,7 +6589,7 @@ function buildParchmentMap(){
     const mtnLabel=document.createElementNS(svgNS,'text');
     mtnLabel.setAttribute('x',1120);mtnLabel.setAttribute('y',195);
     mtnLabel.setAttribute('text-anchor','middle');mtnLabel.setAttribute('font-family','Georgia,serif');
-    mtnLabel.setAttribute('font-size','11');mtnLabel.setAttribute('font-style','italic');
+    mtnLabel.setAttribute('font-size','12');mtnLabel.setAttribute('font-style','italic');
     mtnLabel.setAttribute('fill','#4a3a6a');mtnLabel.setAttribute('opacity','0.55');
     mtnLabel.textContent='where every legend lives';
     mtnG.appendChild(mtnLabel);
@@ -6276,7 +6613,7 @@ function buildParchmentMap(){
   const compassN=document.createElementNS(svgNS,'text');
   compassN.setAttribute('x',compassCx);compassN.setAttribute('y',compassCy-32);
   compassN.setAttribute('text-anchor','middle');compassN.setAttribute('font-family','Georgia,serif');
-  compassN.setAttribute('font-size','10');compassN.setAttribute('font-weight','700');compassN.setAttribute('fill',compassColor);compassN.setAttribute('opacity','0.6');
+  compassN.setAttribute('font-size','12');compassN.setAttribute('font-weight','700');compassN.setAttribute('fill',compassColor);compassN.setAttribute('opacity','0.6');
   compassN.textContent='N';
   compass.appendChild(compassN);
   decorG.appendChild(compass);
@@ -6397,7 +6734,7 @@ function triggerReactionBubble(groupId,x,y,text){
   lines.forEach((line,i)=>{
     const t=document.createElementNS(svgNS,'text');
     t.setAttribute('x',bx.toFixed(1));t.setAttribute('y',(by+16+i*14).toFixed(1));
-    t.setAttribute('text-anchor','middle');t.setAttribute('font-size','11.5');t.setAttribute('font-weight','700');
+    t.setAttribute('text-anchor','middle');t.setAttribute('font-size','12');t.setAttribute('font-weight','700');
     t.setAttribute('fill','#3a2a14');t.textContent=line;
     g.appendChild(t);
   });
@@ -6475,7 +6812,7 @@ function updateParchmentMap(){
   craftG.appendChild(pill);
   const youAreHere=document.createElementNS(svgNS,'text');
   youAreHere.setAttribute('x',px.toFixed(1));youAreHere.setAttribute('y',(pillY+2).toFixed(1));
-  youAreHere.setAttribute('text-anchor','middle');youAreHere.setAttribute('font-size','10');
+  youAreHere.setAttribute('text-anchor','middle');youAreHere.setAttribute('font-size','12');
   youAreHere.setAttribute('font-weight','800');youAreHere.setAttribute('fill','#3a2a14');
   youAreHere.textContent='🐾 YOU ARE HERE';
   craftG.appendChild(youAreHere);
@@ -6863,7 +7200,7 @@ function label(g,svgNS,text){
   const t=document.createElementNS(svgNS,'text');
   t.setAttribute('x',150);t.setAttribute('y',152);
   t.setAttribute('text-anchor','middle');t.setAttribute('font-family','Georgia,serif');
-  t.setAttribute('font-size','9.5');t.setAttribute('font-style','italic');
+  t.setAttribute('font-size','12');t.setAttribute('font-style','italic');
   t.setAttribute('fill','#3a2a14');t.setAttribute('opacity','0.6');
   t.textContent=text;
   g.appendChild(t);
@@ -7529,6 +7866,7 @@ const HOUSE_DID_YOU_KNOW=[
 const HOUSE_INTERACTIONS={
   pet:{emoji:'🥰',texts:["Mmmm… pets… 😌","*leans into your hand* 🐶","Tail wag activated 🐾","Best human ever ❤️","More pets please… 🥺"]},
   toy:{emoji:'🎾',texts:["BALL!! 🎾🎾🎾","*immediately forgets nap* 😄","Zoomies incoming! 🐕💨","Squeak squeak! 🐾","Drop. Throw again. Now. 🎾"]},
+  toyCalm:{emoji:'🎾',texts:["*noses the ball, too hot to chase it* 🥵","*flops back down next to it* 😮‍💨","A gentle nudge — that's the effort budget today 🎾","*pants softly, stays put* 🐾","Happy to have it nearby, not up for zoomies right now 😌"]},
   water:{emoji:'💧',texts:["Slurp slurp slurp 💧","*drinks for 40 seconds straight* 😅","Thank you! 🐶💧","Ah, refreshing! 🌊","*splashes a little bit* 💦"]},
   food:{emoji:'🍽️',texts:["*spins in circles before the bowl* 🐶🍽️","KIBBLE!! My favourite!! 😍","*eats so fast* chomp chomp chomp 🐾","Mmm, exactly what I wanted 😋","*licks the bowl absolutely clean* 🍽️✨","Is there more? *puppy eyes* 🥺"]},
   uchiwa:{emoji:'🪭',texts:["Ahh, so refreshing! 😌","*fur ruffles in the breeze* 🐶💨","Ooh, that's the spot! 🥰","*happy squint into the wind* 😊","You're my personal AC! ❤️"]},
@@ -7645,7 +7983,8 @@ function placePuppyAtSpot(spot,animate){
 function scheduleHouseWander(){
   clearTimeout(houseWanderTimer);
   if(isNightHours()) return;
-  const delay=20000+Math.random()*25000;
+  const isExtreme=userWeatherLevel==='extreme';
+  const delay=(isExtreme?35000:20000)+Math.random()*(isExtreme?35000:25000);
   houseWanderTimer=setTimeout(()=>{
     if(stepsSinceLastDrink>=THIRST_THRESHOLD&&(!houseCurrentSpot||houseCurrentSpot.id!=='water')){
       autoDrinkInRoom();
@@ -7853,7 +8192,8 @@ const PUPPYROOM_SEASON_STYLE={
   summer:{floorBg:'#7a5a30',floor:'#c9935a',baseboard:'#d9ac72',wall:'#f0e0bc',curtain:'#f4efe4',plant:'#6bbf5e'}
 };
 function applyPuppyRoomSeason(season){
-  const cooling=season==='summer'||weatherMood==='hot';
+  const heatReported=(userWeatherLevel==='hot'||userWeatherLevel==='extreme');
+  const cooling=season==='summer'||weatherMood==='hot'||heatReported;
   const style=PUPPYROOM_SEASON_STYLE[cooling?'summer':'winter'];
   const setFill=(id,val)=>{const el=document.getElementById(id);if(el)el.setAttribute('fill',val);};
   setFill('puppyroom-floor-bg',style.floorBg);
@@ -7893,7 +8233,8 @@ function showHouseBubble(text){
 
 function houseInteract(type){
   if(type!=='water'&&ownerLocation!=='home')return; // matches updateHouseInteractAvailability's disabled state
-  const interaction=HOUSE_INTERACTIONS[type];
+  const calmToy=type==='toy'&&userWeatherLevel==='extreme';
+  const interaction=HOUSE_INTERACTIONS[calmToy?'toyCalm':type];
   const texts=interaction.texts;
   const msg=texts[Math.floor(Math.random()*texts.length)];
   if(type==='food'||type==='water'){
@@ -8642,7 +8983,7 @@ function updateSpacePanel(){
   craftG.appendChild(pill);
   const youAreHere=document.createElementNS(svgNS,'text');
   youAreHere.setAttribute('x',craftX.toFixed(1));youAreHere.setAttribute('y',(pillY+2).toFixed(1));
-  youAreHere.setAttribute('text-anchor','middle');youAreHere.setAttribute('font-size','10');
+  youAreHere.setAttribute('text-anchor','middle');youAreHere.setAttribute('font-size','12');
   youAreHere.setAttribute('font-weight','800');youAreHere.setAttribute('fill','#1a1200');youAreHere.setAttribute('opacity',craftOpacity.toFixed(2));
   youAreHere.textContent=phase==='outbound'?'🐾 YOU ARE HERE':(phase==='drifting'?'STILL DRIFTING':'GONE SILENT');
   craftG.appendChild(youAreHere);
@@ -8847,7 +9188,7 @@ function buildGalaxyScene(){
     bodiesG.appendChild(core);
     const label=document.createElementNS(svgNS,'text');
     label.setAttribute('x',x);label.setAttribute('y',cy+w.size+18);
-    label.setAttribute('text-anchor','middle');label.setAttribute('font-size','10');
+    label.setAttribute('text-anchor','middle');label.setAttribute('font-size','12');
     label.setAttribute('font-weight','700');label.setAttribute('fill','rgba(255,255,255,0.7)');
     label.textContent=w.emoji+' '+w.name.split(' ')[0];
     bodiesG.appendChild(label);
@@ -9023,13 +9364,13 @@ function buildFlightMap(){
     bubbleG.appendChild(bRect);
     const bName=document.createElementNS(svgNS,'text');
     bName.setAttribute('x',bubbleCx.toFixed(1));bName.setAttribute('y',(bubbleRectY+13).toFixed(1));
-    bName.setAttribute('text-anchor','middle');bName.setAttribute('font-size','10.5');
+    bName.setAttribute('text-anchor','middle');bName.setAttribute('font-size','12');
     bName.setAttribute('font-weight','800');bName.setAttribute('fill','#0a2032');
     bName.textContent=c.icon+' '+c.name;
     bubbleG.appendChild(bName);
     const bFact=document.createElementNS(svgNS,'text');
     bFact.setAttribute('x',bubbleCx.toFixed(1));bFact.setAttribute('y',(bubbleRectY+25).toFixed(1));
-    bFact.setAttribute('text-anchor','middle');bFact.setAttribute('font-size','8.5');
+    bFact.setAttribute('text-anchor','middle');bFact.setAttribute('font-size','12');
     bFact.setAttribute('font-weight','500');bFact.setAttribute('fill','#2a4a5a');
     triviaLines.forEach((line,li)=>{
       const tspan=document.createElementNS(svgNS,'tspan');
@@ -9213,7 +9554,7 @@ function buildAscentLadder(){
     const labelX=ACX+side*30;
     const label=document.createElementNS(svgNS,'text');
     label.setAttribute('x',labelX.toFixed(1));label.setAttribute('y',(y+4).toFixed(1));
-    label.setAttribute('text-anchor',side===-1?'end':'start');label.setAttribute('font-size','9.5');
+    label.setAttribute('text-anchor',side===-1?'end':'start');label.setAttribute('font-size','12');
     label.setAttribute('font-weight','700');label.setAttribute('fill','rgba(255,255,255,0.8)');
     label.textContent=am.m>=1000?(am.m/1000).toLocaleString()+' km':am.m+' m';
     g.appendChild(label);
@@ -9240,13 +9581,13 @@ function buildAscentLadder(){
     bubbleG.appendChild(bRect);
     const bName=document.createElementNS(svgNS,'text');
     bName.setAttribute('x',bubbleCx.toFixed(1));bName.setAttribute('y',(bubbleRectY+13).toFixed(1));
-    bName.setAttribute('text-anchor','middle');bName.setAttribute('font-size','10');
+    bName.setAttribute('text-anchor','middle');bName.setAttribute('font-size','12');
     bName.setAttribute('font-weight','800');bName.setAttribute('fill','#0d3a5c');
     bName.textContent=am.name;
     bubbleG.appendChild(bName);
     const bNote=document.createElementNS(svgNS,'text');
     bNote.setAttribute('x',bubbleCx.toFixed(1));bNote.setAttribute('y',(bubbleRectY+25).toFixed(1));
-    bNote.setAttribute('text-anchor','middle');bNote.setAttribute('font-size','8.5');
+    bNote.setAttribute('text-anchor','middle');bNote.setAttribute('font-size','12');
     bNote.setAttribute('font-weight','500');bNote.setAttribute('fill','#1a3a4a');
     triviaLines.forEach((line2,li)=>{
       const tspan=document.createElementNS(svgNS,'tspan');
@@ -9267,7 +9608,7 @@ function buildAscentLadder(){
       bubbleG.appendChild(jRect);
       const jText=document.createElementNS(svgNS,'text');
       jText.setAttribute('x',bubbleCx.toFixed(1));jText.setAttribute('y',(jumpY+2+(jumpRowH-6)/2+3).toFixed(1));
-      jText.setAttribute('text-anchor','middle');jText.setAttribute('font-size','8');
+      jText.setAttribute('text-anchor','middle');jText.setAttribute('font-size','12');
       jText.setAttribute('font-weight','800');jText.setAttribute('fill','#3a2a00');
       jText.textContent=am.jumpLabel;
       jText.style.cursor='pointer';
@@ -9372,12 +9713,12 @@ function buildScaleRuler(){
 
   const flightLabel=document.createElementNS(svgNS,'text');
   flightLabel.setAttribute('x',SX_START+10);flightLabel.setAttribute('y',(FLIGHT_Y+26).toFixed(1));
-  flightLabel.setAttribute('font-size','9');flightLabel.setAttribute('font-weight','800');
+  flightLabel.setAttribute('font-size','12');flightLabel.setAttribute('font-weight','800');
   flightLabel.setAttribute('fill',SCALE_CAT_COLOR.flight);flightLabel.textContent="✈️ ON EARTH'S SURFACE";
   bracketsG.appendChild(flightLabel);
   const spaceLabel=document.createElementNS(svgNS,'text');
   spaceLabel.setAttribute('x',SX_START+10);spaceLabel.setAttribute('y',(SPACE_Y-14).toFixed(1));
-  spaceLabel.setAttribute('font-size','9');spaceLabel.setAttribute('font-weight','800');
+  spaceLabel.setAttribute('font-size','12');spaceLabel.setAttribute('font-weight','800');
   spaceLabel.setAttribute('fill','rgba(255,255,255,0.6)');spaceLabel.textContent='🚀 AWAY FROM EARTH';
   bracketsG.appendChild(spaceLabel);
 
@@ -9400,7 +9741,7 @@ function buildScaleRuler(){
     const labelY=y+tierDir*22;
     const label=document.createElementNS(svgNS,'text');
     label.setAttribute('x',x.toFixed(1));label.setAttribute('y',labelY.toFixed(1));
-    label.setAttribute('text-anchor','middle');label.setAttribute('font-size','9');
+    label.setAttribute('text-anchor','middle');label.setAttribute('font-size','12');
     label.setAttribute('font-weight','700');label.setAttribute('fill','rgba(255,255,255,0.8)');
     label.textContent=formatScaleDistance(m.km);
     g.appendChild(label);
@@ -9423,13 +9764,13 @@ function buildScaleRuler(){
     bubbleG.appendChild(bRect);
     const bName=document.createElementNS(svgNS,'text');
     bName.setAttribute('x',bubbleCx.toFixed(1));bName.setAttribute('y',(bubbleRectY+13).toFixed(1));
-    bName.setAttribute('text-anchor','middle');bName.setAttribute('font-size','10.5');
+    bName.setAttribute('text-anchor','middle');bName.setAttribute('font-size','12');
     bName.setAttribute('font-weight','800');bName.setAttribute('fill','#0d3a5c');
     bName.textContent=m.name;
     bubbleG.appendChild(bName);
     const bNote=document.createElementNS(svgNS,'text');
     bNote.setAttribute('x',bubbleCx.toFixed(1));bNote.setAttribute('y',(bubbleRectY+25).toFixed(1));
-    bNote.setAttribute('text-anchor','middle');bNote.setAttribute('font-size','8.5');
+    bNote.setAttribute('text-anchor','middle');bNote.setAttribute('font-size','12');
     bNote.setAttribute('font-weight','500');bNote.setAttribute('fill','#1a3a4a');
     triviaLines.forEach((line2,li)=>{
       const tspan=document.createElementNS(svgNS,'tspan');
@@ -9991,7 +10332,19 @@ document.querySelectorAll('.ev-btn').forEach(btn=>{
 
 // ═══ BANNER ═══
 let bannerTimer=null;
-function showBanner(msg){moodBanner.textContent=msg;moodBanner.classList.add('visible');clearTimeout(bannerTimer);bannerTimer=setTimeout(()=>moodBanner.classList.remove('visible'),2800);}
+// Tappable banner: same look, but tapping it runs fn (used to point at hidden features).
+function showBannerAction(msg,fn,ms){
+  showBanner(msg);
+  moodBanner.classList.add('actionable');moodBanner.__act=fn;
+  clearTimeout(bannerTimer);
+  bannerTimer=setTimeout(()=>{moodBanner.classList.remove('visible','actionable');moodBanner.__act=null;},ms||5000);
+}
+moodBanner.addEventListener('click',()=>{
+  const f=moodBanner.__act; if(!f)return;
+  moodBanner.__act=null;moodBanner.classList.remove('visible','actionable');
+  try{f();}catch(e){}
+});
+function showBanner(msg){moodBanner.classList.remove('actionable');moodBanner.__act=null;moodBanner.textContent=msg;moodBanner.classList.add('visible');clearTimeout(bannerTimer);bannerTimer=setTimeout(()=>moodBanner.classList.remove('visible'),2800);}
 
 // ═══ ② SAVE / EXPORT / IMPORT ═══
 function saveState(){
@@ -10369,6 +10722,7 @@ let autoWalkSpeed=1;
 // keeps replies varied and stops it feeling like a dog that talks in full
 // sentences every single time.
 const PUPPY_RESPONSES={
+  custom:[{type:'action',text:'*tilts head, listening closely*'},{type:'dog',text:'Woof! 🐶'},{type:'human',text:'💭 "I hear you. Say more!"'}],
   hi:[{type:'action',text:'*ears perk up, tail wagging fast*'},{type:'dog',text:'Woof woof! 🐾'},{type:'human',text:'💭 "Hey! You came to talk to me!"'}],
   morning:[{type:'dog',text:'Yawn... woof! Ready! ☀️'},{type:'action',text:'*stretches front paws out, big yawn*'},{type:'human',text:'💭 "Let\'s make today a good one!"'}],
   miss:[{type:'action',text:'*whimpers softly, leans against your leg*'},{type:'dog',text:'Whine... woof! 🥺'},{type:'human',text:'💭 "I was waiting for you."'}],
@@ -10515,6 +10869,10 @@ document.getElementById('talk-list').addEventListener('click',e=>{
 // added, fixed, or removed, a new entry goes at the TOP of this array —
 // {date:'Mon DD, YYYY', type:'added'|'fixed'|'removed'|'pending', text:'...'}
 const LAB_LOG=[
+  {date:'Oct 8, 2026',type:'fixed',text:"🧼 Two layout issues found in a screen recording. (1) The reaction banner ('Noted:', '*lap* Yum', etc.) was cut off behind the open Settings menu and sat right on top of the puppy and water bowl. It now sits higher (bottom 210px, clear of the puppy and bowl) and above the menus (z-index 210). (2) While the puppy is at the water bowl, the floating 💬 Talk and ⏰ Walk reminder bubbles now fade out, because they sat at the same height and drew over the bowl and its 'Good walk!' label. They return as soon as the bowl slides away."},
+  {date:'Oct 8, 2026',type:'fixed',text:"🐛 Cycling (bike) button was invisible. Root cause: the HOME paw button ported back on Oct 7 used the exact same position as #cycle-toggle-btn (bottom 96px, right 16px, 56px circle) with z-index 400 vs the bike button's 55, so it sat on top and hid it completely. Fixed properly after a screen recording review: HOME now only appears while a room/panel/Discover screen is open (never on the main screen), is smaller (48px), and sits at z-index 190 so it stays under Settings/Accessories menus and dialogs (Walk reminder, Friend Clocks) instead of floating over them and over room content. The bike button owns its spot on the main screen again."},
+  {date:'Oct 8, 2026',type:'added',text:"🕶️ Discoverability pass for Sunglasses styles (the 8-style picker existed but nothing hinted at it). (1) Accessories chip now reads 'Sunglasses · 8 styles' while off and shows the current style's icon + name while on. (2) A red dot on the 🎒 button and a NEW pill on the Sunglasses chip until the picker is opened once (new key pw_sg_seen, covered by the wildcard save/restore; also counts as seen if pw_sunglasses_style was already set, so existing users are not nagged). (3) When Hot/Nice weather mood auto-puts shades on, a tappable banner 'Tap here to pick a style' follows (only until the picker has been found); new showBannerAction() helper, regular showBanner() clears the tap action. Help text updated to mention the styles."},
+  {date:'Oct 7, 2026',type:'added',text:"Ported back in from the older version: the HOME paw button, the Feels-like weather chip (self-reported weather that cools Puppy's Room and calms toy play in extreme heat), the backyard frisbee, a write-your-own box in Talk to Puppy, and a season-based garden picker with 6 plots (plants available follow the real season). Also: larger minimum text size, readable map labels, shortened help text."},
   {date:'Sep 3, 2026',type:'fixed',text:"🐛 Hemisphere buttons AND the Real weather Turn on/off buttons doing nothing at all when tapped — no highlight, no status change, no banner. Root cause was much bigger than either feature: 12 separate places in the file loaded a saved value with a bare `JSON.parse(localStorage.getItem(key)||fallback)`, no try/catch (e.g. pw_garden, pw_friends, pw_home_city, pw_unlocked, pw_space_badges_earned, pw_dog_friends, pw_myth_journal, pw_newborn, pw_lab_notes, and others). If ANY ONE of those values ever became invalid JSON — a partial write during a storage-quota failure, an old/incompatible schema from a much earlier version, a hand-edited Save/Restore import — that JSON.parse throws a plain SyntaxError, and since this whole app is one script block, that single throw silently kills every statement after it in the file, including the Hemisphere and Real-weather button wiring (both defined later in the script than most of these). Reproduced exactly: set pw_garden to invalid JSON, confirmed hemisphere clicks did nothing; confirmed they work fine after the fix with the same corrupted value present. Fixed by routing all 12 through a new pwLoadJSON(key,fallback) helper that catches parse errors and falls back to that key's default — so one corrupted key now just resets that one feature to its default instead of breaking the rest of the app. (The two pre-existing JSON.parse calls for pw_activity_log/pw_mood_log already had their own try/catch and didn't need touching.)"},
   {date:'Sep 3, 2026',type:'fixed',text:"🐛 \\\"Real weather\\\" toggle: tapping \\\"Turn on\\\" did nothing visible — no banner, no status change, stuck forever. Root cause: enableLocation() relied entirely on the browser's own geolocation {timeout:8000} option to eventually fire the error callback if permission isn't granted — but in sandboxed/embedded contexts (previews, WebViews without geolocation explicitly permitted) the browser can silently decline to call EITHER the success or error callback at all, so that built-in timeout never triggers either, and the button click produces zero feedback. Reproduced exactly: stubbed getCurrentPosition to never call back, confirmed nothing happened. Fixed with the app's own independent 9s fallback timer inside enableLocation() — if neither callback has fired by then, it now shows a banner (\\\"Couldn't get your location here — try opening this in your regular browser, or use the weather picker below instead\\\") and resets state, so the toggle always gives visible feedback either way. On a normal phone browser with geolocation actually available, this changes nothing — the real callback still wins normally, well under 9s."},
   {date:'Sep 3, 2026',type:'fixed',text:"🐛 Console error: \\\"Uncaught TypeError: Cannot read properties of undefined (reading 'label')\\\" on every load. Root cause: the theme-status init line read `window.PW_THEMES[localStorage.getItem('pw_theme')].label` directly, with no fallback — unlike applyTheme() right above it, which safely does `PW_THEMES[name]||PW_THEMES.classic`. Any stale/invalid saved pw_theme value (e.g. a pre-migration name like 'theme3' on a browser where the one-time v2 migration flag was already set from an earlier session, so migrateThemeV2() skipped it) made this throw. Confirmed by reproducing it: setting pw_theme='theme3' + pw_theme_v2_done='1' reliably threw this exact error. Since the whole app is one script block, this single throw killed every statement below it on the page. Fixed to use the same safe PW_THEMES[name]||PW_THEMES.classic fallback, plus it now self-heals by resetting pw_theme to 'classic' in storage if the saved value doesn't match a real theme, so it won't recur for that browser."},
@@ -10961,11 +11319,11 @@ const OBS_DOME_SCENES={
     ${Array.from({length:38}).map((_,i)=>{const x=(i*53.7)%320,y=(i*29.3)%190,r=(i%5===0)?1.6:0.9;return `<circle cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="${r}" fill="#fff" opacity="${0.4+(i%4)*0.15}"/>`}).join('')}
     <text x="235" y="55" font-size="20">🌕</text>
     <text x="70" y="120" font-size="13" fill="#ffe9a8">✦</text>
-    <text x="60" y="122" font-size="9" fill="rgba(255,255,255,0.6)">Venus</text>
+    <text x="60" y="122" font-size="12" fill="rgba(255,255,255,0.6)">Venus</text>
     <text x="150" y="70" font-size="13" fill="#fff">✦</text>
-    <text x="140" y="60" font-size="9" fill="rgba(255,255,255,0.6)">Jupiter</text>
-    <text x="200" y="140" font-size="11" fill="#ffb08a">✦</text>
-    <text x="190" y="155" font-size="9" fill="rgba(255,255,255,0.6)">Mars</text>
+    <text x="140" y="60" font-size="12" fill="rgba(255,255,255,0.6)">Jupiter</text>
+    <text x="200" y="140" font-size="12" fill="#ffb08a">✦</text>
+    <text x="190" y="155" font-size="12" fill="rgba(255,255,255,0.6)">Mars</text>
   `},
   binoc:{caption:"🔭 Binoculars: sharper stars, and Jupiter's moons pop into view",svg:`
     <rect x="0" y="0" width="320" height="190" fill="#05070f"/>
@@ -10975,7 +11333,7 @@ const OBS_DOME_SCENES={
     <circle cx="158" cy="88" r="1.2" fill="#dbeaff"/>
     <circle cx="184" cy="101" r="1.2" fill="#dbeaff"/>
     <circle cx="196" cy="95" r="1.4" fill="#dbeaff"/>
-    <text x="170" y="122" text-anchor="middle" font-size="9" fill="rgba(255,255,255,0.65)">Jupiter + its 4 moons</text>
+    <text x="170" y="122" text-anchor="middle" font-size="12" fill="rgba(255,255,255,0.65)">Jupiter + its 4 moons</text>
   `},
   small:{caption:"🔬 Through a small telescope: Saturn's rings clearly separate from the disc",svg:`
     <circle cx="160" cy="95" r="88" fill="#05070f"/>
@@ -10983,7 +11341,7 @@ const OBS_DOME_SCENES={
     <ellipse cx="160" cy="95" rx="60" ry="16" fill="none" stroke="#d8c48a" stroke-width="4" opacity="0.9"/>
     <circle cx="160" cy="95" r="24" fill="#e8d29a"/>
     <circle cx="245" cy="80" r="1.6" fill="#fff" opacity="0.8"/>
-    <text x="160" y="182" text-anchor="middle" font-size="9" fill="rgba(255,255,255,0.65)">Saturn at ~30–50×, in the eyepiece</text>
+    <text x="160" y="182" text-anchor="middle" font-size="12" fill="rgba(255,255,255,0.65)">Saturn at ~30–50×, in the eyepiece</text>
   `},
   big:{caption:"🌌 Through a big telescope: the Cassini Division and faint moons appear",svg:`
     <circle cx="160" cy="95" r="88" fill="#05070f"/>
@@ -10995,7 +11353,7 @@ const OBS_DOME_SCENES={
     <circle cx="255" cy="75" r="1.6" fill="#fff" opacity="0.85"/>
     <circle cx="235" cy="130" r="1.3" fill="#fff" opacity="0.7"/>
     <circle cx="70" cy="60" r="1.3" fill="#fff" opacity="0.7"/>
-    <text x="160" y="182" text-anchor="middle" font-size="9" fill="rgba(255,255,255,0.65)">Saturn at ~150×, with the Cassini gap + moons</text>
+    <text x="160" y="182" text-anchor="middle" font-size="12" fill="rgba(255,255,255,0.65)">Saturn at ~150×, with the Cassini gap + moons</text>
   `},
   public:{caption:"🏛️ Through a public observatory telescope: real color, cleanly split double stars",svg:`
     <circle cx="130" cy="95" r="70" fill="#05070f"/>
@@ -11005,23 +11363,23 @@ const OBS_DOME_SCENES={
     <ellipse cx="130" cy="102" rx="34" ry="3.5" fill="#c88848" opacity="0.5"/>
     <circle cx="250" cy="70" r="4.5" fill="#ffe9a8"/>
     <circle cx="266" cy="82" r="3.5" fill="#9ec8ff"/>
-    <text x="258" y="105" text-anchor="middle" font-size="8" fill="rgba(255,255,255,0.6)">Albireo, split gold/blue</text>
-    <text x="130" y="182" text-anchor="middle" font-size="9" fill="rgba(255,255,255,0.65)">Jupiter's bands in real tan &amp; cream color</text>
+    <text x="258" y="105" text-anchor="middle" font-size="12" fill="rgba(255,255,255,0.6)">Albireo, split gold/blue</text>
+    <text x="130" y="182" text-anchor="middle" font-size="12" fill="rgba(255,255,255,0.65)">Jupiter's bands in real tan &amp; cream color</text>
   `},
   pro:{caption:"🔭 What a professional research telescope reveals — data, not just prettier pictures",svg:`
     <rect x="0" y="0" width="320" height="190" fill="#05070f"/>
     ${Array.from({length:20}).map((_,i)=>{const x=(i*71.3)%320,y=(i*43.1)%190,r=(i%5===0)?1.4:0.8;return `<circle cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="${r}" fill="#fff" opacity="${0.3+(i%4)*0.12}"/>`}).join('')}
     <circle cx="150" cy="95" r="3" fill="#ffe9a8"/>
     <circle cx="164" cy="90" r="1.2" fill="#ff9a5a"/>
-    <text x="180" y="88" font-size="8" fill="rgba(255,180,120,0.85)">exoplanet</text>
+    <text x="180" y="88" font-size="12" fill="rgba(255,180,120,0.85)">exoplanet</text>
     <path d="M40 150 L80 130 L120 138 L160 118 L200 128 L240 100 L280 108" stroke="#7ed3ff" stroke-width="1.5" fill="none" opacity="0.7"/>
-    <text x="160" y="170" text-anchor="middle" font-size="8" fill="rgba(255,255,255,0.5)">spectrum: reading a planet's atmosphere</text>
+    <text x="160" y="170" text-anchor="middle" font-size="12" fill="rgba(255,255,255,0.5)">spectrum: reading a planet's atmosphere</text>
   `},
   space:{caption:"🛰️ Hubble & JWST: no atmosphere in the way at all",svg:`
     <rect x="0" y="0" width="320" height="190" fill="#03040a"/>
     ${Array.from({length:44}).map((_,i)=>{const x=(i*47.7)%320,y=(i*23.3)%190,r=(i%6===0)?1.7:0.8;return `<circle cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="${r}" fill="#fff" opacity="${0.5+(i%4)*0.12}"/>`}).join('')}
     ${Array.from({length:14}).map((_,i)=>{const x=40+(i*67.3)%260,y=30+(i*51.1)%140,r=3+(i%3)*2;return `<ellipse cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" rx="${r}" ry="${(r*0.6).toFixed(1)}" fill="#c9a6ff" opacity="0.35" transform="rotate(${(i*37)%180} ${x} ${y})"/>`}).join('')}
-    <text x="160" y="178" text-anchor="middle" font-size="9" fill="rgba(255,255,255,0.65)">Distant, ancient galaxies — light billions of years old</text>
+    <text x="160" y="178" text-anchor="middle" font-size="12" fill="rgba(255,255,255,0.65)">Distant, ancient galaxies — light billions of years old</text>
   `}
 };
 function renderObsDome(tier){
@@ -11172,19 +11530,64 @@ function toggleSunglasses(){
   localStorage.setItem('pw_sunglasses',sunglassesOn?'1':'0');
   document.getElementById('puppy-wrap').classList.toggle('puppy-sunglasses-on',sunglassesOn);
   const statusEl=document.getElementById('sunglasses-status');
-  if(statusEl)statusEl.textContent=sunglassesOn?'On':'Off';
+  if(statusEl)statusEl.textContent=sunglassesOn?(window.sgStyleName?sgStyleName():'On'):'Off';
   showBanner(sunglassesOn?'😎 Cool! Don\u2019t forget yours too!':'Sunglasses off 🐶');
   syncAccessoryChips();
 }
 function restoreSunglasses(){
   document.getElementById('puppy-wrap').classList.toggle('puppy-sunglasses-on',sunglassesOn);
   const statusEl=document.getElementById('sunglasses-status');
-  if(statusEl)statusEl.textContent=sunglassesOn?'On':'Off';
+  if(statusEl)statusEl.textContent=sunglassesOn?(window.sgStyleName?sgStyleName():'On'):'Off';
 }
 document.getElementById('smenu-sunglasses').addEventListener('click',()=>{
   toggleSunglasses();
 });
 restoreSunglasses();
+
+// ── Sunglasses: several styles + a picker ──
+const SUNGLASS_STYLES={"classic": {"name": "Classic", "icon": "🕶️", "svg": "<rect x=\"1\" y=\"1\" width=\"12\" height=\"7\" rx=\"3.5\" fill=\"#1a1a2e\" stroke=\"#333\" stroke-width=\"0.5\"/><rect x=\"19\" y=\"1\" width=\"12\" height=\"7\" rx=\"3.5\" fill=\"#1a1a2e\" stroke=\"#333\" stroke-width=\"0.5\"/><line x1=\"13\" y1=\"3.5\" x2=\"19\" y2=\"3.5\" stroke=\"#333\" stroke-width=\"1.5\"/>"}, "aviator": {"name": "Aviator", "icon": "✈️", "svg": "<path transform=\"translate(0 0)\" d=\"M1 1.4 H13 Q13 8.3 7 8.3 Q1 8.3 1 1.4Z\" fill=\"#17465c\" stroke=\"#d4af37\" stroke-width=\"0.8\"/><path transform=\"translate(0 0)\" d=\"M2.6 2.4 H6 L3.6 5Z\" fill=\"#fff\" opacity=\"0.25\"/><path transform=\"translate(18 0)\" d=\"M1 1.4 H13 Q13 8.3 7 8.3 Q1 8.3 1 1.4Z\" fill=\"#17465c\" stroke=\"#d4af37\" stroke-width=\"0.8\"/><path transform=\"translate(18 0)\" d=\"M2.6 2.4 H6 L3.6 5Z\" fill=\"#fff\" opacity=\"0.25\"/><path d=\"M13 2.2 Q16 1 19 2.2\" fill=\"none\" stroke=\"#d4af37\" stroke-width=\"0.8\"/>"}, "round": {"name": "Round", "icon": "🟤", "svg": "<circle cx=\"7\" cy=\"4.5\" r=\"3.7\" fill=\"#2b2118\" stroke=\"#c8a24a\" stroke-width=\"0.8\"/><circle cx=\"5.8\" cy=\"3.3\" r=\"0.9\" fill=\"#fff\" opacity=\"0.3\"/><circle cx=\"25\" cy=\"4.5\" r=\"3.7\" fill=\"#2b2118\" stroke=\"#c8a24a\" stroke-width=\"0.8\"/><circle cx=\"23.8\" cy=\"3.3\" r=\"0.9\" fill=\"#fff\" opacity=\"0.3\"/><path d=\"M10.7 3.6 Q16 1.8 21.3 3.6\" fill=\"none\" stroke=\"#c8a24a\" stroke-width=\"0.8\"/>"}, "hearts": {"name": "Hearts", "icon": "❤️", "svg": "<path transform=\"translate(0 0)\" d=\"M7 8.2 L2.2 3.6 C0.6 2 1.6 0.7 3.3 0.7 C4.9 0.7 6.1 1.5 7 2.7 C7.9 1.5 9.1 0.7 10.7 0.7 C12.4 0.7 13.4 2 11.8 3.6 Z\" fill=\"#ff4d8d\" stroke=\"#c2185b\" stroke-width=\"0.6\"/><circle transform=\"translate(0 0)\" cx=\"3.6\" cy=\"2.6\" r=\"0.8\" fill=\"#fff\" opacity=\"0.55\"/><path transform=\"translate(18 0)\" d=\"M7 8.2 L2.2 3.6 C0.6 2 1.6 0.7 3.3 0.7 C4.9 0.7 6.1 1.5 7 2.7 C7.9 1.5 9.1 0.7 10.7 0.7 C12.4 0.7 13.4 2 11.8 3.6 Z\" fill=\"#ff4d8d\" stroke=\"#c2185b\" stroke-width=\"0.6\"/><circle transform=\"translate(18 0)\" cx=\"3.6\" cy=\"2.6\" r=\"0.8\" fill=\"#fff\" opacity=\"0.55\"/><line x1=\"12.5\" y1=\"2.8\" x2=\"19.5\" y2=\"2.8\" stroke=\"#c2185b\" stroke-width=\"1\"/>"}, "stars": {"name": "Stars", "icon": "⭐", "svg": "<polygon points=\"7.00,0.30 8.12,3.06 11.09,3.27 8.81,5.19 9.53,8.08 7.00,6.50 4.47,8.08 5.19,5.19 2.91,3.27 5.88,3.06\" fill=\"#ffd93d\" stroke=\"#e0a800\" stroke-width=\"0.6\" stroke-linejoin=\"round\"/><polygon points=\"25.00,0.30 26.12,3.06 29.09,3.27 26.81,5.19 27.53,8.08 25.00,6.50 22.47,8.08 23.19,5.19 20.91,3.27 23.88,3.06\" fill=\"#ffd93d\" stroke=\"#e0a800\" stroke-width=\"0.6\" stroke-linejoin=\"round\"/><line x1=\"11\" y1=\"3.6\" x2=\"21\" y2=\"3.6\" stroke=\"#e0a800\" stroke-width=\"1\"/>"}, "neon": {"name": "Neon", "icon": "💜", "svg": "<path transform=\"translate(0 0)\" d=\"M1 1 H13 L11.8 7.6 Q11.6 8 11 8 H3 Q2.4 8 2.2 7.5Z\" fill=\"#6a1fd0\" stroke=\"#ff2fd1\" stroke-width=\"0.8\" stroke-linejoin=\"round\"/><path transform=\"translate(0 0)\" d=\"M3 2 H7 L4 6Z\" fill=\"#fff\" opacity=\"0.2\"/><path transform=\"translate(18 0)\" d=\"M1 1 H13 L11.8 7.6 Q11.6 8 11 8 H3 Q2.4 8 2.2 7.5Z\" fill=\"#6a1fd0\" stroke=\"#ff2fd1\" stroke-width=\"0.8\" stroke-linejoin=\"round\"/><path transform=\"translate(18 0)\" d=\"M3 2 H7 L4 6Z\" fill=\"#fff\" opacity=\"0.2\"/><line x1=\"13\" y1=\"2.6\" x2=\"19\" y2=\"2.6\" stroke=\"#ff2fd1\" stroke-width=\"1.2\"/>"}, "mirror": {"name": "Mirror", "icon": "🪞", "svg": "<rect transform=\"translate(0 0)\" x=\"1\" y=\"1\" width=\"12\" height=\"7\" rx=\"2.2\" fill=\"#6fd3ff\" stroke=\"#0b6aa8\" stroke-width=\"0.7\"/><path transform=\"translate(0 0)\" d=\"M2 2 H8 L4 7 H2Z\" fill=\"#fff\" opacity=\"0.45\"/><rect transform=\"translate(18 0)\" x=\"1\" y=\"1\" width=\"12\" height=\"7\" rx=\"2.2\" fill=\"#6fd3ff\" stroke=\"#0b6aa8\" stroke-width=\"0.7\"/><path transform=\"translate(18 0)\" d=\"M2 2 H8 L4 7 H2Z\" fill=\"#fff\" opacity=\"0.45\"/><line x1=\"13\" y1=\"3.2\" x2=\"19\" y2=\"3.2\" stroke=\"#0b6aa8\" stroke-width=\"1.3\"/>"}, "rainbow": {"name": "Rainbow", "icon": "🌈", "svg": "<g transform=\"translate(0 0)\"><rect x=\"1\" y=\"1\" width=\"12\" height=\"2.4\" fill=\"#ff5252\"/><rect x=\"1\" y=\"3.4\" width=\"12\" height=\"2.3\" fill=\"#ffd93d\"/><rect x=\"1\" y=\"5.7\" width=\"12\" height=\"2.3\" fill=\"#4dabf7\"/><rect x=\"1\" y=\"1\" width=\"12\" height=\"7\" rx=\"1.6\" fill=\"none\" stroke=\"#333\" stroke-width=\"0.8\"/></g><g transform=\"translate(18 0)\"><rect x=\"1\" y=\"1\" width=\"12\" height=\"2.4\" fill=\"#ff5252\"/><rect x=\"1\" y=\"3.4\" width=\"12\" height=\"2.3\" fill=\"#ffd93d\"/><rect x=\"1\" y=\"5.7\" width=\"12\" height=\"2.3\" fill=\"#4dabf7\"/><rect x=\"1\" y=\"1\" width=\"12\" height=\"7\" rx=\"1.6\" fill=\"none\" stroke=\"#333\" stroke-width=\"0.8\"/></g><line x1=\"13\" y1=\"3.5\" x2=\"19\" y2=\"3.5\" stroke=\"#333\" stroke-width=\"1.4\"/>"}};
+let sunglassesStyle=localStorage.getItem('pw_sunglasses_style');
+if(!SUNGLASS_STYLES[sunglassesStyle])sunglassesStyle='classic';
+const sgSvg=id=>'<svg viewBox="0 0 32 9" xmlns="http://www.w3.org/2000/svg">'+SUNGLASS_STYLES[id].svg+'</svg>';
+window.sgStyleName=()=>SUNGLASS_STYLES[sunglassesStyle].name;
+window.sgStyleIcon=()=>SUNGLASS_STYLES[sunglassesStyle].icon;
+window.sgStyleCount=()=>Object.keys(SUNGLASS_STYLES).length;
+// "Have they found the style picker?" — drives the NEW dot/pill and the tappable
+// auto-shades banner. Counts as seen if the picker was ever opened OR a style
+// was already picked before this feature existed (pw_sunglasses_style is set).
+function sgSeen(){ try{ return localStorage.getItem('pw_sg_seen')==='1'||localStorage.getItem('pw_sunglasses_style')!==null; }catch(e){ return false; } }
+function sgMarkSeen(){ try{localStorage.setItem('pw_sg_seen','1');}catch(e){} document.body.classList.remove('sg-unseen'); }
+if(!sgSeen())document.body.classList.add('sg-unseen');
+function applySunglassesStyle(){
+  const el=document.getElementById('p-sunglasses'); if(el)el.innerHTML=sgSvg(sunglassesStyle);
+  const st=document.getElementById('sunglasses-status'); if(st)st.textContent=sunglassesOn?sgStyleName():'Off';
+  if(window.syncAccessoryChips)try{window.syncAccessoryChips();}catch(e){}
+}
+function renderSunglassesPicker(){
+  const grid=document.getElementById('sg-grid');
+  grid.innerHTML=Object.keys(SUNGLASS_STYLES).map(id=>
+    '<button class="sg-opt'+(sunglassesOn&&id===sunglassesStyle?' active':'')+'" data-id="'+id+'">'+sgSvg(id)+'<span>'+SUNGLASS_STYLES[id].icon+' '+SUNGLASS_STYLES[id].name+'</span></button>').join('');
+  grid.querySelectorAll('.sg-opt').forEach(b=>b.addEventListener('click',()=>{
+    sunglassesStyle=b.dataset.id; localStorage.setItem('pw_sunglasses_style',sunglassesStyle);
+    if(!sunglassesOn){ sunglassesOn=true; localStorage.setItem('pw_sunglasses','1'); document.getElementById('puppy-wrap').classList.add('puppy-sunglasses-on'); }
+    applySunglassesStyle(); closeSunglassesPicker();
+    try{syncAccessoryChips();}catch(e){}
+    showBanner('😎 '+SUNGLASS_STYLES[sunglassesStyle].name+' shades on!');
+  }));
+  document.getElementById('sg-off').style.display=sunglassesOn?'block':'none';
+}
+function openSunglassesPicker(){ sgMarkSeen(); renderSunglassesPicker(); document.getElementById('sg-modal').classList.add('open'); }
+function closeSunglassesPicker(){ document.getElementById('sg-modal').classList.remove('open'); }
+window.openSunglassesPicker=openSunglassesPicker;
+document.getElementById('sg-close').addEventListener('click',closeSunglassesPicker);
+document.getElementById('sg-modal').addEventListener('click',e=>{if(e.target.id==='sg-modal')closeSunglassesPicker();});
+document.getElementById('sg-off').addEventListener('click',()=>{ if(sunglassesOn)toggleSunglasses(); applySunglassesStyle(); closeSunglassesPicker(); try{syncAccessoryChips();}catch(e){} });
+// Settings item + Accessories chip now open the picker (one extra tap, many looks)
+const _sgItem=document.getElementById('smenu-sunglasses');
+_sgItem.replaceWith(_sgItem.cloneNode(true)); // drop the old plain on/off listener
+document.getElementById('smenu-sunglasses').addEventListener('click',()=>{ try{settingsMenu.classList.remove('open');}catch(e){} openSunglassesPicker(); });
+applySunglassesStyle();
+try{if(window.syncAccessoryChips)window.syncAccessoryChips();}catch(e){}
 
 // Raincoat — same pattern as Sunglasses, a fun cosmetic toggle for the puppy
 let raincoatOn=localStorage.getItem('pw_raincoat')==='1';
@@ -11670,7 +12073,7 @@ document.getElementById('health-quick-btn').addEventListener('click',()=>{
   setTimeout(()=>document.getElementById('import-input').focus(),300);
 });
 
-function applyHealthSync(urlSteps,urlCycling,method){
+function applyHealthSync(urlSteps,urlCycling,method,meta){
   const prev=steps;
   const apple=method==='auto'?'🔄':'🍎';
   let stepsChanged=false,gained=0;
@@ -11703,7 +12106,7 @@ function applyHealthSync(urlSteps,urlCycling,method){
     if(stepsChanged)parts.push('+'+gained.toLocaleString()+' steps');
     else if(urlSteps>0)parts.push(steps.toLocaleString()+' steps');
     if(urlCycling>0)parts.push(urlCycling.toFixed(1)+'km cycling');
-    showBanner(apple+' '+parts.join(' + ')+'! Woof! 🐶'+(urlCycling>0?'⛑️':''));
+    showWelcomeBack({gained:stepsChanged?gained:0,cycling:urlCycling,total:steps,daily:(meta&&meta.daily)||0,awayMs:wbPrevSeen?Date.now()-wbPrevSeen:0});
     addActivityLog(apple+' Health sync ('+method+'): '+parts.join(' + '));
   } else if(urlSteps>0){
     // Received a number, but it didn't beat what we already had — safe no-op,
@@ -11713,36 +12116,129 @@ function applyHealthSync(urlSteps,urlCycling,method){
   }
 }
 
+// Health "daily" mode: the shortcut sends TODAY'S total (?daily=1234). The app remembers how
+// much of today's total it already counted, so running the shortcut again never double-counts
+// and tomorrow starts from zero.
+function healthDayKey(){ const d=new Date(); return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0'); }
+function readHealthDaily(){ try{ const r=JSON.parse(localStorage.getItem('pw_health_daily')||'{}'); return r.day===healthDayKey()?(r.count||0):0; }catch(e){ return 0; } }
+function saveHealthDaily(count){ try{ localStorage.setItem('pw_health_daily',JSON.stringify({day:healthDayKey(),count:count})); }catch(e){} }
+
 function checkURLSteps(){
   try{
     const params=new URLSearchParams(window.location.search);
-    const urlSteps=parseInt(params.get('steps')||'0');
-    const urlCycling=parseFloat(params.get('cycling')||'0');
-    // Exit only if BOTH are empty — cycling-only sync must still work
-    if((!urlSteps||isNaN(urlSteps)||urlSteps<=0)&&(!urlCycling||urlCycling<=0))return;
-
-    if(autoSyncEnabled){
-      setTimeout(()=>{
-        applyHealthSync(urlSteps,urlCycling,'auto');
-        window.history.replaceState({},'',window.location.pathname);
-      },800);
-      return;
+    // Accept "5,231", "5231.4", " 5231 " — strip anything that isn't a digit or dot
+    const num=k=>{ const v=params.get(k); if(v==null)return 0; const n=parseFloat(String(v).replace(/[^0-9.]/g,'')); return isNaN(n)?0:n; };
+    let urlSteps=Math.floor(num('steps'));
+    const urlCycling=num('cycling');
+    const daily=Math.floor(num('daily'));
+    let dailyGain=0,dailyCounted=0;
+    if(daily>0&&!urlSteps){
+      dailyCounted=readHealthDaily();
+      dailyGain=Math.max(0,daily-dailyCounted);
+      urlSteps=dailyGain>0?steps+dailyGain:steps; // gain>0 → new total; otherwise a harmless "no new steps"
     }
+    // Exit only if everything is empty — cycling-only sync must still work
+    if(!urlSteps&&!(urlCycling>0))return;
+    const done=method=>{ applyHealthSync(urlSteps,urlCycling,method,daily>0?{daily:Math.max(daily,dailyCounted)}:null); if(daily>0)saveHealthDaily(Math.max(daily,dailyCounted)); window.history.replaceState({},'',window.location.pathname); };
 
-    const added=urlSteps>steps?urlSteps-steps:0;
-    const stepInfo=urlSteps>0?'🐾 Steps: '+urlSteps.toLocaleString()+(added>0?' (+'+added.toLocaleString()+' new)':''):'';
+    if(autoSyncEnabled||(daily>0&&dailyGain===0&&!(urlCycling>0))){ setTimeout(()=>done('auto'),800); return; } // nothing new to confirm → just say so
+
+    let stepInfo='';
+    if(daily>0) stepInfo='👣 Today: '+daily.toLocaleString()+' steps'+(dailyGain>0?' (+'+dailyGain.toLocaleString()+' new)':' (already counted)');
+    else if(urlSteps>0){ const added=urlSteps>steps?urlSteps-steps:0; stepInfo='👣 Steps: '+urlSteps.toLocaleString()+(added>0?' (+'+added.toLocaleString()+' new)':''); }
     const cycleInfo=urlCycling>0?'🚴 Cycling: '+urlCycling.toFixed(1)+' km':'';
     const lines=[stepInfo,cycleInfo].filter(Boolean).join('\n');
     const msg='🍎 Apple Health sync!\n\n'+lines+'\n\nUpdate your puppy?';
-
     setTimeout(()=>{
-      if(confirm(msg)){
-        applyHealthSync(urlSteps,urlCycling,'manual');
-      }
-      window.history.replaceState({},'',window.location.pathname);
+      if(confirm(msg)) done('manual'); else window.history.replaceState({},'',window.location.pathname);
     },800);
   }catch(e){}
 }
+
+
+// ═══ POCKET MODE + WELCOME-BACK SUMMARY ═══
+// Last-seen stamp, read BEFORE it is refreshed, so the welcome-back card can say how long you were gone.
+const wbPrevSeen=parseInt(localStorage.getItem('pw_last_seen')||'0');
+function wbStampSeen(){ try{ localStorage.setItem('pw_last_seen',String(Date.now())); }catch(e){} }
+wbStampSeen();
+setInterval(wbStampSeen,30000);
+window.addEventListener('pagehide',wbStampSeen);
+document.addEventListener('visibilitychange',()=>{ if(document.visibilityState==='hidden')wbStampSeen(); });
+
+function wbFmtDuration(ms){
+  const m=Math.floor(ms/60000);
+  if(m<1)return 'under a minute';
+  if(m<60)return m+' min';
+  const h=Math.floor(m/60),r=m%60;
+  if(h<24)return h+'h'+(r?' '+r+'m':'');
+  const d=Math.floor(h/24);return d+' day'+(d>1?'s':'')+(h%24?' '+(h%24)+'h':'');
+}
+function showWelcomeBack(info){
+  const modal=document.getElementById('wback-modal');
+  const ob=document.getElementById('onboarding-screen');
+  // Don't pop up over the welcome screen — wait until it's dismissed.
+  if(ob&&!ob.classList.contains('hidden')){ setTimeout(()=>showWelcomeBack(info),600); return; }
+  const big=document.getElementById('wback-big'),lines=document.getElementById('wback-lines');
+  big.textContent=info.gained>0?'+'+info.gained.toLocaleString()+' steps':(info.cycling>0?info.cycling.toFixed(1)+' km':'');
+  const rows=[];
+  if(info.awayMs>=60000)rows.push('Away for '+wbFmtDuration(info.awayMs));
+  if(info.daily>0)rows.push('Today so far: '+info.daily.toLocaleString()+' steps');
+  else if(info.gained>0)rows.push('Total: '+info.total.toLocaleString()+' steps');
+  if(info.gained>0&&info.cycling>0)rows.push('🚴 '+info.cycling.toFixed(1)+' km cycling');
+  rows.push(info.gained>=8000?'Your puppy is blissfully worn out! 😴':info.gained>=3000?'What a big day — tail still wagging! 🐶':info.gained>0?'Every step counts. Good walk! 🐾':'Nice ride! 🚴');
+  lines.innerHTML=rows.map(r=>'<div>'+r+'</div>').join('');
+  modal.classList.add('open');
+}
+document.getElementById('wback-ok').addEventListener('click',()=>document.getElementById('wback-modal').classList.remove('open'));
+
+const pocketEl=document.getElementById('pocket-overlay');
+const pocketHold=document.getElementById('pocket-hold');
+let pocketOn=false,pocketStartSteps=0,pocketStartTime=0,pocketTick=null,pocketHideAt=0,pocketHoldTimer=null;
+function pocketRender(){
+  document.getElementById('pocket-count').textContent=Math.max(0,steps-pocketStartSteps).toLocaleString();
+  const sec=Math.floor((Date.now()-pocketStartTime)/1000);
+  document.getElementById('pocket-time').textContent=Math.floor(sec/60)+':'+String(sec%60).padStart(2,'0');
+}
+async function startPocketMode(){
+  if(pocketOn)return;
+  if(!motionMode){
+    showBanner('Pocket mode needs motion counting — tap “Allow motion” on the welcome screen first 🐾');
+    return;
+  }
+  pocketOn=true;pocketStartSteps=steps;pocketStartTime=Date.now();pocketHideAt=0;
+  document.getElementById('pocket-note').classList.remove('show');
+  pocketRender();
+  pocketEl.classList.add('on');
+  clearInterval(pocketTick);pocketTick=setInterval(pocketRender,1000);
+  if(wakeLock===null)await requestWakeLock(); // keep the page awake so motion keeps flowing
+  addActivityLog('🔒 Pocket mode on');
+}
+function endPocketMode(){
+  if(!pocketOn)return;
+  const gained=Math.max(0,steps-pocketStartSteps),ms=Date.now()-pocketStartTime;
+  pocketOn=false;clearInterval(pocketTick);pocketTick=null;
+  pocketHold.classList.remove('holding');clearTimeout(pocketHoldTimer);
+  pocketEl.classList.remove('on');
+  showBanner('🔓 Pocket walk: +'+gained.toLocaleString()+' steps in '+wbFmtDuration(ms));
+  addActivityLog('🔓 Pocket mode off: +'+gained+' steps in '+wbFmtDuration(ms));
+}
+function pocketHoldStart(e){ if(e)e.preventDefault(); pocketHold.classList.add('holding'); clearTimeout(pocketHoldTimer); pocketHoldTimer=setTimeout(endPocketMode,1500); }
+function pocketHoldCancel(){ pocketHold.classList.remove('holding'); clearTimeout(pocketHoldTimer); }
+pocketHold.addEventListener('pointerdown',pocketHoldStart);
+['pointerup','pointerleave','pointercancel'].forEach(ev=>pocketHold.addEventListener(ev,pocketHoldCancel));
+pocketEl.addEventListener('contextmenu',e=>e.preventDefault());
+['touchstart','touchmove'].forEach(ev=>pocketEl.addEventListener(ev,e=>e.preventDefault(),{passive:false}));
+document.getElementById('smenu-pocket').addEventListener('click',()=>{ settingsMenu.classList.remove('open'); startPocketMode(); });
+document.addEventListener('visibilitychange',()=>{
+  if(!pocketOn)return;
+  if(document.visibilityState==='hidden'){ pocketHideAt=Date.now(); return; }
+  if(pocketHideAt&&Date.now()-pocketHideAt>5000){
+    const n=document.getElementById('pocket-note');
+    n.textContent='The screen was off for '+wbFmtDuration(Date.now()-pocketHideAt)+', so counting paused. Run your Health shortcut to catch up.';
+    n.classList.add('show');
+  }
+  pocketHideAt=0;pocketRender();
+});
 
 // ═══ INIT ═══
 lastSpaceWpIdx=parseInt(localStorage.getItem('pw_sp_wp')||'0');
@@ -11901,6 +12397,8 @@ function updateAnalogClock(){
   if(!clockEl)return;
   const visible=isPuppyVisibleScreen();
   clockEl.classList.toggle('visible',visible);
+  document.getElementById('weather-report-btn')?.classList.toggle('visible',visible);
+  if(!visible)document.getElementById('weather-report-popup')?.classList.remove('open');
   document.getElementById('real-weather-chip')?.classList.toggle('visible',visible&&GEO.granted&&!!currentWeather);
   const d=new Date();
   const h=(d.getHours()%12)+d.getMinutes()/60;
@@ -11979,5 +12477,195 @@ setInterval(updateAnalogClock,1000);
 
 </script>
 
+
+<script>
+/* Keep SVG map/diagram labels readable: SVG text shrinks with its drawing, so
+   raise each label so it renders at least ~11px on screen. */
+(function(){
+  var IDS=['orrery-svg','galaxy-svg','parchment-svg','flight-svg','ascent-svg','scale-svg','biggalaxy-svg','obs-dome-svg','landmark-svg'];
+  var MIN=11, queued=false;
+  function fix(svg){
+    var vb=svg.viewBox&&svg.viewBox.baseVal; if(!vb||!vb.width) return;
+    var r=svg.getBoundingClientRect(); if(!r.width||!r.height) return;
+    var k=Math.min(r.width/vb.width,r.height/vb.height); if(!k) return;
+    var need=MIN/k, cap=(svg.id==='landmark-svg')?14:1e9;
+    var ts=svg.querySelectorAll('text');
+    for(var i=0;i<ts.length;i++){
+      var t=ts[i], b=t.__fs;
+      if(!b){ b=parseFloat(t.getAttribute('font-size'))||parseFloat(getComputedStyle(t).fontSize)||12; t.__fs=b; }
+      var f=Math.min(Math.max(b,need),Math.max(b,cap));
+      if(Math.abs((t.__set||0)-f)>0.05){ t.style.fontSize=f+'px'; t.__set=f; }
+    }
+  }
+  function run(){ queued=false; IDS.forEach(function(id){ var e=document.getElementById(id); if(e) fix(e); }); }
+  function queue(){ if(!queued){ queued=true; requestAnimationFrame(run); } }
+  function init(){
+    IDS.forEach(function(id){
+      var e=document.getElementById(id); if(!e) return;
+      if(window.ResizeObserver) new ResizeObserver(queue).observe(e);
+      new MutationObserver(queue).observe(e,{childList:true,subtree:true});
+    });
+    window.addEventListener('resize',queue);
+    queue();
+  }
+  if(document.readyState==='loading') document.addEventListener('DOMContentLoaded',init); else init();
+})();
+</script>
+
+<script>
+/* ═══ Ported features ═══ */
+document.getElementById('home-paw-btn').addEventListener('click',goHome);
+// ── Manual "Feels like" weather report ──
+const WEATHER_LEVELS={
+  clear:{icon:'☀️',label:'Clear',danger:false},
+  hot:{icon:'🥵',label:'Hot',danger:false},
+  extreme:{icon:'🔥',label:'Extreme heat',danger:true},
+  cloudy:{icon:'☁️',label:'Cloudy',danger:false},
+  rain:{icon:'🌧️',label:'Rain',danger:false},
+  storm:{icon:'⛈️',label:'Storm',danger:true},
+  snow:{icon:'❄️',label:'Snow',danger:false},
+  cold:{icon:'🥶',label:'Cold',danger:false}
+};
+let userWeatherTapLog=[];
+let userWeatherCommitTimer=null;
+function renderWeatherBadge(previewLevel){
+  const btn=document.getElementById('weather-report-btn');
+  const shown=previewLevel!==undefined?previewLevel:userWeatherLevel;
+  const lv=shown&&WEATHER_LEVELS[shown];
+  btn.querySelector('.wr-icon').textContent=lv?lv.icon:'🌡️';
+  btn.querySelector('.wr-chip-value').textContent=lv?lv.label:'Report';
+  btn.title=lv?('You reported it feels like: '+lv.label+' — tap to change'):'Tap to report how it feels right now';
+  btn.classList.toggle('wr-danger',!!(lv&&lv.danger));
+  btn.classList.remove('wr-hot','wr-extreme','wr-cold','wr-snow','wr-storm','wr-rain');
+  if(shown)btn.classList.add('wr-'+shown);
+  document.querySelectorAll('.wr-opt').forEach(el=>el.classList.toggle('active',el.dataset.level===shown));
+}
+// Every tap updates the icon instantly (cheap, harmless preview), but the
+// real reaction — banner, room visuals, safety tip — only fires once the
+// choice settles for a moment. That way idle curiosity-tapping (or a
+// mis-tap) doesn't spam reminders or flicker the room. Tapping several
+// different options quickly is recognized and answered with a light nudge
+// instead of firing every single one.
+function pickUserWeather(level){
+  renderWeatherBadge(level);
+  const now=Date.now();
+  userWeatherTapLog.push({level,time:now});
+  userWeatherTapLog=userWeatherTapLog.filter(t=>now-t.time<20000);
+  const distinctRecent=new Set(userWeatherTapLog.map(t=>t.level)).size;
+  clearTimeout(userWeatherCommitTimer);
+  if(distinctRecent>=4){
+    showBanner("🐾 Just exploring? Tap whichever one actually matches right now and I'll go with that!");
+    userWeatherCommitTimer=setTimeout(()=>commitUserWeather(level),2200);
+    return;
+  }
+  userWeatherCommitTimer=setTimeout(()=>commitUserWeather(level),1400);
+}
+function commitUserWeather(level){
+  userWeatherLevel=level;
+  try{localStorage.setItem('pw_user_weather',level);}catch(e){}
+  renderWeatherBadge();
+  document.getElementById('weather-report-popup').classList.remove('open');
+  const lv=WEATHER_LEVELS[level];
+  showBanner('Noted: '+lv.icon+' '+lv.label);
+  applyPuppyRoomSeason(getSeason());
+  if(lv.danger){
+    let lastTip=0;
+    try{lastTip=parseInt(localStorage.getItem('pw_wr_tip_time')||'0');}catch(e){}
+    if(Date.now()-lastTip>12*60*1000){
+      try{localStorage.setItem('pw_wr_tip_time',Date.now());}catch(e){}
+      setTimeout(()=>{
+        showBanner(level==='extreme'?'🥵 Hot pavement can burn paw pads — try a shorter walk, shade, or early morning/evening instead. Puppy\'s Room is cooling down for it. ❄️':'⛈️ Thunder can really scare dogs — maybe a shorter walk, or wait it out indoors.');
+      },2600);
+    }
+  }
+}
+document.getElementById('weather-report-btn').addEventListener('click',e=>{
+  e.stopPropagation();
+  document.getElementById('weather-report-popup').classList.toggle('open');
+});
+document.getElementById('weather-report-popup').addEventListener('click',e=>e.stopPropagation());
+document.addEventListener('click',()=>document.getElementById('weather-report-popup').classList.remove('open'));
+document.querySelectorAll('.wr-opt').forEach(el=>el.addEventListener('click',()=>pickUserWeather(el.dataset.level)));
+renderWeatherBadge();
+if(typeof updateAnalogClock==='function')updateAnalogClock();
+// ── Backyard frisbee ──
+// Throw the frisbee — the disc flies to a random spot and the puppy dashes after it.
+function backyardThrowFrisbee(){
+  if(backyardThrowFrisbee._busy)return;
+  backyardThrowFrisbee._busy=true;
+  const puppyEl=document.getElementById('puppy');
+  const wrap=document.getElementById('backyard-puppy-wrap');
+  const frisbee=document.getElementById('backyard-frisbee');
+  const startLeft=wrap.style.left||'50%';
+  const targetLeft=(18+Math.random()*64)+'%'; // stays clear of the fence edges
+  puppyEl.className='state-happy';
+  pSparkle.style.opacity='1';
+  showBackyardBubble('Frisbee!! Go go go!! 🥏💨');
+  frisbee.style.transition='none';
+  frisbee.style.left=startLeft;
+  frisbee.style.bottom='34%';
+  frisbee.style.opacity='1';
+  void frisbee.offsetWidth;
+  frisbee.style.transition='';
+  frisbee.classList.add('flying');
+  frisbee.style.left=targetLeft;
+  frisbee.style.bottom='24%';
+  wrap.style.left=targetLeft; // puppy dashes to meet it, same timing
+  clearTimeout(backyardThrowFrisbee._catchT);
+  backyardThrowFrisbee._catchT=setTimeout(()=>{
+    frisbee.classList.remove('flying');
+    frisbee.style.opacity='0';
+    showBackyardBubble('Caught it!! 🥏🐾 Nice catch!');
+    puppyEl.className='state-happy';
+    clearTimeout(backyardThrowFrisbee._reset);
+    backyardThrowFrisbee._reset=setTimeout(()=>{
+      puppyEl.className='state-sniff';
+      pSparkle.style.opacity='0';
+      wrap.style.left='50%';
+      backyardThrowFrisbee._busy=false;
+    },1800);
+  },680);
+}
+
+// ── Talk to Puppy: write your own ──
+document.getElementById('btn-talk-send').addEventListener('click',()=>{
+  const input=document.getElementById('talk-custom-input');
+  const text=input.value.trim();
+  if(!text)return;
+  talkToPuppy('custom',text);
+  input.value='';
+});
+document.getElementById('talk-custom-input').addEventListener('keydown',e=>{
+  if(e.key==='Enter')document.getElementById('btn-talk-send').click();
+});
+</script>
+
+<script>
+/* ═══ Apple Health guide: show this app's own link and copy it ═══ */
+(function(){
+  const base=location.origin+location.pathname;
+  const full=base+'?daily=';
+  const code=document.getElementById('hm-app-link'); if(code)code.textContent=full;
+  const warn=document.getElementById('hm-link-warn');
+  if(warn&&(location.protocol==='file:'||location.origin==='null')){
+    warn.style.display='block';
+    warn.textContent='⚠️ This app is open as a file on this device, so the shortcut cannot open it. Put the app on a web address (https) first, open it from there, and copy the link again.';
+  }
+  const btn=document.getElementById('hm-copy-btn');
+  if(btn)btn.addEventListener('click',async()=>{
+    let ok=false;
+    try{ await navigator.clipboard.writeText(full); ok=true; }catch(e){
+      try{ const r=document.createRange(); r.selectNodeContents(code); const sel=getSelection(); sel.removeAllRanges(); sel.addRange(r); ok=document.execCommand('copy'); sel.removeAllRanges(); }catch(e2){}
+    }
+    btn.textContent=ok?'✅ Copied! Now paste it in the Text box':'Press and hold the link above → Copy';
+    setTimeout(()=>{btn.textContent='📋 Copy my link';},3500);
+  });
+  const g=document.getElementById('import-open-guide');
+  if(g)g.addEventListener('click',()=>{
+    document.getElementById('import-screen').style.display='none';
+    document.getElementById('smenu-health-manual').click();
+  });
+})();
+</script>
 </body>
 </html>
